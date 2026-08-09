@@ -3,7 +3,10 @@ import type { PropsWithChildren } from 'react';
 
 const serviceWorker = `
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  window.addEventListener('load', async () => {
+    const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+    registration.update();
+  });
 }
 `;
 

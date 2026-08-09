@@ -1,0 +1,43 @@
+export const AppColors = {
+  light: {
+    background: '#f7f8f7',
+    surface: '#ffffff',
+    surfaceMuted: '#e9eeed',
+    border: '#e4e9ed',
+    text: '#15202b',
+    mutedText: '#64717b',
+    subduedText: '#75808a',
+    accent: '#0d6e63',
+    accentSoft: '#e0f1ed',
+    accentStrong: '#79dbc7',
+    codeBackground: '#eff3f4',
+    codeText: '#22303a',
+    foundBackground: '#fbfffe',
+    foundBorder: '#bce3da',
+    snackBackground: '#152c35',
+    snackText: '#c8d7d9',
+    danger: '#a05c58',
+  },
+  dark: {
+    background: '#101614',
+    surface: '#1a211f',
+    surfaceMuted: '#26312e',
+    border: '#34403c',
+    text: '#edf4f1',
+    mutedText: '#abb9b5',
+    subduedText: '#95a49f',
+    accent: '#77dac7',
+    accentSoft: '#1d3933',
+    accentStrong: '#98ead9',
+    codeBackground: '#293531',
+    codeText: '#e4eeea',
+    foundBackground: '#1a2b27',
+    foundBorder: '#3d796d',
+    snackBackground: '#0b1210',
+    snackText: '#c8d6d1',
+    danger: '#f2938a',
+  },
+} as const;
+
+export type AppColorScheme = keyof typeof AppColors;
+export type AppThemeColors = (typeof AppColors)[AppColorScheme];

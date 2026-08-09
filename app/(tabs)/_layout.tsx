@@ -2,14 +2,23 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
+import { useAppTheme } from '@/components/theme-provider';
+
 export default function TabLayout() {
+  const { colors } = useAppTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0d6e63',
-        tabBarInactiveTintColor: '#75808a',
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.subduedText,
         headerShown: false,
-        tabBarStyle: { borderTopColor: '#e4e9ed', height: 84, paddingTop: 8 },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          height: 84,
+          paddingTop: 8,
+        },
         tabBarLabelStyle: { fontWeight: '700', fontSize: 12 },
       }}>
       <Tabs.Screen
@@ -24,6 +33,13 @@ export default function TabLayout() {
         options={{
           title: 'Journal',
           tabBarIcon: ({ color }) => <MaterialIcons size={24} name="history" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Options',
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="settings" color={color} />,
         }}
       />
     </Tabs>
