@@ -1,50 +1,25 @@
-# Welcome to your Expo app 👋
+# Plated
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Un journal de plaques local, conçu pour noter rapidement les départements français et les pays de l’Union européenne croisés sur la route. La version web est installable sur l’écran d’accueil d’un iPhone.
 
-## Get started
+## Version web installable
 
-1. Install dependencies
+Après déploiement, ouvrez l’URL dans Safari sur iPhone, touchez Partager puis **Sur l’écran d’accueil**. Les observations sont conservées dans le navigateur de chaque téléphone et restent donc indépendantes.
 
-   ```bash
-   npm install
-   ```
+## Lancer en local
 
-2. Start the app
+1. Installe [Expo Go](https://expo.dev/go) sur l’iPhone.
+2. Dans ce dossier, exécute `npm install`, puis `npm start`.
+3. Scanne le QR code affiché avec Expo Go.
 
-   ```bash
-   npx expo start
-   ```
+Les observations restent sur le téléphone, dans une base SQLite locale. Désinstaller l’application efface donc le journal.
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Vérifications
 
 ```bash
-npm run reset-project
+npm test
+npm run typecheck
+npm run lint
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Le catalogue embarqué contient 101 départements français et 26 pays de l’Union européenne — la France est couverte par les départements.
