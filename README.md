@@ -14,6 +14,19 @@ Après déploiement, ouvrez l’URL dans Safari sur iPhone, touchez Partager pui
 
 Les observations restent sur le téléphone, dans une base SQLite locale. Désinstaller l’application efface donc le journal.
 
+## Déploiement web et mises à jour
+
+Le build web génère un service worker Workbox. Lorsqu'une nouvelle version prend le contrôle de la PWA,
+une bannière propose de recharger l'application. La recherche de mise à jour est relancée au démarrage et
+chaque fois que la PWA revient au premier plan.
+
+Le fichier `public/_headers` configure le cache pour les hébergeurs qui prennent en charge le format
+Netlify/Cloudflare Pages. Sur un autre hébergeur, appliquez les mêmes règles dans sa configuration :
+
+- `/sw.js` ne doit pas être mis en cache ;
+- les pages HTML et le manifeste doivent être revalidés ;
+- les bundles sous `/_expo/static/`, dont le nom contient un hash, peuvent être conservés un an.
+
 ## Vérifications
 
 ```bash

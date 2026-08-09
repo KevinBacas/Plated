@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { PwaUpdateBanner } from '@/components/pwa-update-banner';
 import { ThemeProvider, useAppTheme } from '@/components/theme-provider';
 import { ObservationsProvider } from '@/context/observations';
 
@@ -28,6 +29,7 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="target/[targetId]" options={{ headerShown: false }} />
         </Stack>
+        <PwaUpdateBanner />
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       </ObservationsProvider>
     </NavigationThemeProvider>

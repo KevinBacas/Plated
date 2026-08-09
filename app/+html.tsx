@@ -3,9 +3,37 @@ import type { PropsWithChildren } from 'react';
 
 const serviceWorker = `
 if ('serviceWorker' in navigator) {
+  window.__PLATED_UPDATE_READY__ = false;
+
   window.addEventListener('load', async () => {
-    const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
-    registration.update();
+    let hadController = Boolean(navigator.serviceWorker.controller);
+
+    const announceUpdate = () => {
+      if (!hadController || window.__PLATED_UPDATE_READY__) return;
+
+      window.__PLATED_UPDATE_READY__ = true;
+      window.dispatchEvent(new CustomEvent('plated:update-ready'));
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', announceUpdate);
+
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        updateViaCache: 'none',
+      });
+
+      const checkForUpdate = () => registration.update().catch(() => undefined);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
+      window.addEventListener('pageshow', checkForUpdate);
+
+      await checkForUpdate();
+      hadController = true;
+    } catch {
+      // Offline startup still works with the already-installed service worker.
+    }
   });
 }
 `;
