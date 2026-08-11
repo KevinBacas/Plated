@@ -64,6 +64,15 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   const colorScheme: AppColorScheme =
     themePreference === 'system' ? (systemColorScheme ?? 'light') : themePreference;
   const colors = AppColors[colorScheme];
+
+  useEffect(() => {
+    if (process.env.EXPO_OS !== 'web') return;
+
+    document.documentElement.style.colorScheme = colorScheme;
+    document.body.style.backgroundColor = colors.background;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.background);
+  }, [colorScheme, colors.background]);
+
   const value = useMemo(
     () => ({ colorScheme, colors, themePreference, setThemePreference }),
     [colorScheme, colors, setThemePreference, themePreference]

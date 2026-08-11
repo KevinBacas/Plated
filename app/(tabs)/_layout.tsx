@@ -5,10 +5,11 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useAppTheme } from '@/components/theme-provider';
 
 export default function TabLayout() {
-  const { colors } = useAppTheme();
+  const { colorScheme, colors } = useAppTheme();
 
   return (
     <Tabs
+      key={colorScheme}
       screenOptions={{
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.subduedText,

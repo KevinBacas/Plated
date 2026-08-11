@@ -144,7 +144,7 @@ export default function CollectionScreen() {
       {pending && (
         <View style={[styles.snack, { backgroundColor: colors.snackBackground }]}>
           <View style={styles.snackCopy}>
-            <Text style={[styles.snackTitle, { color: colors.surface }]}>{pending.target.name} ajouté</Text>
+            <Text style={[styles.snackTitle, { color: colors.snackTitle }]}>{pending.target.name} ajouté</Text>
             <Text style={[styles.snackText, { color: colors.snackText }]}>Observation enregistrée maintenant</Text>
           </View>
           <Pressable onPress={async () => { await undoObservation(pending.observation.id); setPending(null); }} style={styles.snackAction}><Text style={[styles.snackActionText, { color: colors.accentStrong }]}>ANNULER</Text></Pressable>

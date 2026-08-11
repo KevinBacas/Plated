@@ -51,7 +51,7 @@ export default function TargetScreen() {
           <View key={entry.id} style={[styles.entry, { backgroundColor: colors.surface, borderColor: colors.border }]}><View style={styles.entryTop}><Text style={[styles.entryDate, { color: colors.text }]}>{formatDate(entry.observedAt)}</Text><Pressable onPress={() => remove(entry)} hitSlop={10}><MaterialIcons name="delete-outline" size={22} color={colors.danger} /></Pressable></View></View>
         ))}
       </ScrollView>
-      {pending ? <View style={[styles.snack, { backgroundColor: colors.snackBackground }]}><Text style={[styles.snackCopy, { color: colors.surface }]}>Observation ajoutée</Text><Pressable onPress={async () => { await undoObservation(pending.id); setPending(null); }}><Text style={[styles.snackAction, { color: colors.accentStrong }]}>ANNULER</Text></Pressable></View> : null}
+      {pending ? <View style={[styles.snack, { backgroundColor: colors.snackBackground }]}><Text style={[styles.snackCopy, { color: colors.snackTitle }]}>Observation ajoutée</Text><Pressable onPress={async () => { await undoObservation(pending.id); setPending(null); }}><Text style={[styles.snackAction, { color: colors.accentStrong }]}>ANNULER</Text></Pressable></View> : null}
     </SafeAreaView>
   );
 }

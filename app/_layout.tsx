@@ -1,6 +1,8 @@
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import * as NavigationBar from 'expo-navigation-bar';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { PwaUpdateBanner } from '@/components/pwa-update-banner';
@@ -21,6 +23,12 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { colorScheme } = useAppTheme();
+
+  useEffect(() => {
+    if (process.env.EXPO_OS === 'android') {
+      NavigationBar.setStyle(colorScheme);
+    }
+  }, [colorScheme]);
 
   return (
     <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
