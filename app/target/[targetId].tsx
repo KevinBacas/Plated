@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/components/theme-provider';
+import { PlateCode } from '@/components/plate-code';
 import { useObservations } from '@/context/observations';
 import { getTargetById } from '@/data/targets';
 import { formatDate } from '@/lib/format';
@@ -35,8 +36,8 @@ export default function TargetScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Pressable style={styles.back} onPress={() => router.back()}><MaterialIcons name="arrow-back" size={22} color={colors.text} /><Text style={[styles.backText, { color: colors.text }]}>Collection</Text></Pressable>
         <View style={styles.hero}>
-          <View style={[styles.bigCode, { backgroundColor: colors.accentSoft }]}><Text style={[styles.bigCodeText, { color: colors.accent }]}>{target.flag ?? target.code}</Text></View>
-          <View style={styles.heroCopy}><Text style={[styles.title, { color: colors.text }]}>{target.name}</Text><Text style={[styles.region, { color: colors.mutedText }]}>{target.region ?? `Code plaque : ${target.code}`}</Text></View>
+          <PlateCode code={target.code} type={target.type} large />
+          <View style={styles.heroCopy}><Text style={[styles.title, { color: colors.text }]}>{target.flag ? `${target.flag}  ` : ''}{target.name}</Text><Text style={[styles.region, { color: colors.mutedText }]}>{target.region ?? `Code visible sur la plaque : ${target.code}`}</Text></View>
         </View>
         <View style={[styles.stats, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.stat}><Text style={[styles.statNumber, { color: colors.text }]}>{entries.length}</Text><Text style={[styles.statLabel, { color: colors.subduedText }]}>observation{entries.length > 1 ? 's' : ''}</Text></View>
@@ -61,8 +62,6 @@ const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 44 },
   backText: { fontWeight: '800' },
   hero: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 16, marginBottom: 24 },
-  bigCode: { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  bigCodeText: { fontSize: 23, fontWeight: '900' },
   heroCopy: { flex: 1 },
   title: { fontSize: 28, fontWeight: '900' },
   region: { marginTop: 4, fontSize: 15 },

@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/components/theme-provider';
+import { PlateCode } from '@/components/plate-code';
 import type { AppThemeColors } from '@/constants/app-theme';
 import { useObservations } from '@/context/observations';
 import { COUNTRIES, DEPARTMENTS, type Target, type TargetType } from '@/data/targets';
@@ -32,11 +33,9 @@ function TargetRow({ target, count, lastSeen, onAdd }: { target: Target; count: 
         { backgroundColor: colors.surface, borderColor: colors.border },
         count > 0 && { backgroundColor: colors.foundBackground, borderColor: colors.foundBorder },
       ]}>
-      <View style={[styles.code, { backgroundColor: colors.codeBackground }]}>
-        <Text style={[styles.codeText, { color: colors.codeText }]}>{target.flag ?? target.code}</Text>
-      </View>
+      <PlateCode code={target.code} type={target.type} />
       <View style={styles.targetCopy}>
-        <Text style={[styles.targetName, { color: colors.text }]}>{target.name}</Text>
+        <Text style={[styles.targetName, { color: colors.text }]}>{target.flag ? `${target.flag}  ` : ''}{target.name}</Text>
         <Text style={[styles.targetMeta, { color: colors.subduedText }]}>
           {target.region ?? `Plaque ${target.code}`} · {count ? `${count} vue${count > 1 ? 's' : ''} · ${formatDate(lastSeen!)}` : 'À trouver'}
         </Text>
@@ -179,8 +178,6 @@ const styles = StyleSheet.create({
   group: { gap: 8, marginBottom: 21 },
   groupTitle: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.7, marginTop: 5 },
   targetRow: { minHeight: 72, borderWidth: 1, borderRadius: 16, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 11 },
-  code: { width: 45, height: 45, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  codeText: { fontWeight: '900', fontSize: 14 },
   targetCopy: { flex: 1 },
   targetName: { fontWeight: '800', fontSize: 16 },
   targetMeta: { marginTop: 3, fontSize: 12, lineHeight: 17 },

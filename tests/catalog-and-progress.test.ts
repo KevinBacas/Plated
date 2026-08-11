@@ -8,6 +8,9 @@ test('the embedded catalog has 101 departments and 26 EU countries without Franc
   assert.equal(DEPARTMENTS.length, 101);
   assert.equal(COUNTRIES.length, 26);
   assert.equal(COUNTRIES.some((country) => country.name === 'France'), false);
+  assert.equal(COUNTRIES.find((country) => country.name === 'Allemagne')?.code, 'D');
+  assert.equal(COUNTRIES.find((country) => country.name === 'Espagne')?.code, 'E');
+  assert.equal(COUNTRIES.find((country) => country.name === 'Irlande')?.code, 'IRL');
   assert.deepEqual(DEPARTMENTS.find((department) => department.code === '75')?.name, 'Paris');
 });
 
