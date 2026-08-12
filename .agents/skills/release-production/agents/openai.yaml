@@ -1,4 +1,0 @@
-interface:
-  display_name: "Release Production"
-  short_description: "Publier Plated de bout en bout en production"
-  default_prompt: "Utilise $release-production pour publier les changements actuels de Plated en production."
