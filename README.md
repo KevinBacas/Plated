@@ -36,3 +36,15 @@ npm run lint
 ```
 
 Le catalogue embarqué contient 101 départements français et 26 pays de l’Union européenne — la France est couverte par les départements.
+
+## Stratégie de branches
+
+Le dépôt suit une variante simple du **trunk-based development**, proche de GitHub Flow :
+
+- `main` est l’unique branche permanente et représente toujours la production ;
+- chaque fonctionnalité ou correction est développée sur une branche temporaire créée depuis un `main` à jour (`feat/<sujet>`, `fix/<sujet>` ou `docs/<sujet>`) ;
+- la branche temporaire est testée indépendamment, puis intégrée directement dans `main` par pull request après validation ;
+- les branches doivent rester courtes, ciblées et être supprimées après leur fusion ;
+- il n’existe pas de branche permanente `develop`, `staging` ou `release` : les environnements et versions déployées sont identifiés par le commit ou le tag issu de `main`.
+
+Ce modèle est couramment employé dans l’industrie sous les noms de **trunk-based development** ou **GitHub Flow**. Il convient bien à ce dépôt tant que `main` est protégée : les vérifications automatiques doivent réussir, la pull request doit être validée et le déploiement doit pouvoir être annulé rapidement. Une correction urgente suit le même circuit sur une branche `fix/<sujet>` afin de ne pas contourner ces garanties.
