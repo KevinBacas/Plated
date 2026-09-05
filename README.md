@@ -1,14 +1,14 @@
 # Plated
 
-Un journal de plaques pour noter les départements français et les pays de l’Union européenne croisés sur la route. Le catalogue embarqué contient 101 départements et 26 pays de l’UE, la France étant couverte par les départements.
+A license plate journal for recording the French departments and European Union countries spotted on the road. The built-in catalog contains 101 departments and 26 EU countries, with France covered by its departments.
 
-L’application partage son code entre iOS, Android et le web. La version web est une PWA installable : sur iPhone, ouvrir l’URL de production dans Safari, puis **Partager → Sur l’écran d’accueil**.
+The application shares its code across iOS, Android, and the web. The web version is an installable PWA: on iPhone, open the production URL in Safari, then choose **Share → Add to Home Screen**.
 
-Les observations sont conservées localement sur chaque appareil : `localStorage` du navigateur sur le web, stockage adossé à SQLite sur mobile. Il n’y a ni compte utilisateur, ni serveur applicatif, ni synchronisation entre appareils. Effacer les données du site ou désinstaller l’application native peut supprimer le journal.
+Observations are stored locally on each device: browser `localStorage` on the web and SQLite-backed storage on mobile. There are no user accounts, application servers, or synchronization between devices. Clearing site data or uninstalling the native application may delete the journal.
 
-## Démarrage rapide
+## Quick start
 
-Prérequis : Git, **Node.js 22** et npm. Avec [nvm](https://github.com/nvm-sh/nvm), la version majeure est définie dans [.nvmrc](.nvmrc), en accord avec le workflow de production.
+Prerequisites: Git, **Node.js 22**, and npm. With [nvm](https://github.com/nvm-sh/nvm), the major version is defined in [.nvmrc](.nvmrc), matching the production workflow.
 
 ```bash
 git clone https://github.com/KevinBacas/Plated.git
@@ -19,28 +19,28 @@ npm ci
 npm run web
 ```
 
-Sans nvm, installer Node 22 puis exécuter les commandes npm. Ouvrir l’adresse indiquée par Expo, généralement `http://localhost:8081`. Aucun fichier `.env`, secret Expo ou service externe n’est nécessaire pour développer et lancer les vérifications.
+Without nvm, install Node 22 and then run the npm commands. Open the address printed by Expo, usually `http://localhost:8081`. No `.env` file, Expo secret, or external service is required to develop the application or run checks.
 
-Pour modifier le projet, créer d’abord une branche temporaire depuis `main` à jour : voir [Contribuer](CONTRIBUTING.md).
+Before changing the project, create a temporary branch from an up-to-date `main`: see [Contributing](CONTRIBUTING.md).
 
 ## Documentation
 
-- [Développement local et architecture](docs/development.md) : stack, versions, dossiers, mobile, tests et démarrage pour un agent.
-- [Contribuer](CONTRIBUTING.md) : branches, validation, PR et fusion.
-- [Déploiement et releases](docs/deployment.md) : EAS Hosting, secret GitHub, vérifications, reprise et retour arrière.
-- [Instructions pour les agents](AGENTS.md) : conventions à respecter pendant les modifications.
+- [Local development and architecture](docs/development.md): stack, versions, directories, mobile development, tests, and agent setup.
+- [Contributing](CONTRIBUTING.md): branches, validation, pull requests, and merging.
+- [Deployment and releases](docs/deployment.md): EAS Hosting, the GitHub secret, verification, recovery, and rollback.
+- [Agent instructions](AGENTS.md): conventions to follow when making changes.
 
-## Commandes principales
+## Main commands
 
-| Commande | Usage |
+| Command | Purpose |
 | --- | --- |
-| `npm ci` | Installer les versions exactes de `package-lock.json` |
-| `npm start` | Démarrer Metro / Expo |
-| `npm run web` | Développer dans le navigateur |
-| `npm run ios` / `npm run android` | Démarrer Expo et ouvrir la cible native configurée |
-| `npm test` | Exécuter les tests unitaires avec le runner Node via `tsx` |
-| `npm run typecheck` | Vérifier TypeScript sans générer de JavaScript |
-| `npm run lint` | Exécuter ESLint avec la configuration Expo |
-| `npm run build:web` | Exporter le site dans `dist/` et générer le service worker Workbox |
+| `npm ci` | Install the exact versions from `package-lock.json` |
+| `npm start` | Start Metro / Expo |
+| `npm run web` | Develop in the browser |
+| `npm run ios` / `npm run android` | Start Expo and open the configured native target |
+| `npm test` | Run unit tests with the Node test runner through `tsx` |
+| `npm run typecheck` | Check TypeScript without generating JavaScript |
+| `npm run lint` | Run ESLint with the Expo configuration |
+| `npm run build:web` | Export the site to `dist/` and generate the Workbox service worker |
 
-`main` est l’unique branche permanente et la branche de production. Chaque fusion déclenche le déploiement web GitHub Actions ; le SHA du dernier déploiement réussi identifie la version réellement en ligne.
+`main` is the only permanent branch and the production branch. Each merge triggers the GitHub Actions web deployment; the SHA of the last successful deployment identifies the version actually running in production.

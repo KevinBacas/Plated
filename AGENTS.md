@@ -10,6 +10,10 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before 
 - Routes live in `app/`, shared UI in `components/`, the catalog in `data/targets.ts`, and observation state/persistence in `context/observations.tsx`. Preserve existing local data: browser localStorage on web, the expo-sqlite localStorage implementation on native.
 - Inspect the current branch and working tree first. Preserve existing changes. Never run `npm run reset-project` as an installation or repair step.
 
+# Documentation language
+
+- Write repository documentation, skills, PR titles and descriptions, and release notes in English.
+
 # Branching workflow
 
 - Treat `main` as the only permanent branch and as the production branch. Do not create permanent `develop`, `staging`, or `release` branches.

@@ -1,38 +1,38 @@
-# Déploiement et releases
+# Deployment and releases
 
-## Cible et configuration
+## Target and configuration
 
-La livraison automatique concerne la **PWA web sur EAS Hosting**. Le projet est lié par [app.json](../app.json) au compte Expo `kevinbacas`, slug `Plated`, projet `a42b4d2a-b6d5-4eca-a110-1932aadc5c53`. Retrouver les déploiements et les URLs dans la section Hosting du [projet Expo](https://expo.dev/accounts/kevinbacas/projects/Plated).
+Automatic delivery targets the **web PWA on EAS Hosting**. [app.json](../app.json) links the project to Expo account `kevinbacas`, slug `Plated`, project `a42b4d2a-b6d5-4eca-a110-1932aadc5c53`. Find deployments and URLs in the Hosting section of the [Expo project](https://expo.dev/accounts/kevinbacas/projects/Plated).
 
-`web.output` vaut `static`. `npm run build:web` exécute l’export Expo puis Workbox et produit `dist/`, notamment `index.html`, `manifest.json` et `sw.js`. Ne pas remplacer cette commande par le seul export Expo : la PWA perdrait la génération de son service worker.
+`web.output` is set to `static`. `npm run build:web` runs the Expo export followed by Workbox and produces `dist/`, including `index.html`, `manifest.json`, and `sw.js`. Do not replace this command with only the Expo export: the PWA would lose service worker generation.
 
-## Production automatique
+## Automatic production deployment
 
-Le workflow [Deploy production](../.github/workflows/deploy-production.yml) se déclenche à chaque push sur `main`, y compris une fusion de PR de documentation. Il utilise Ubuntu, Node 22 et une concurrence `production` avec `cancel-in-progress: false` pour ne pas interrompre un déploiement en cours.
+The [Deploy production](../.github/workflows/deploy-production.yml) workflow runs on every push to `main`, including merges of documentation PRs. It uses Ubuntu, Node 22, and a `production` concurrency group with `cancel-in-progress: false` to avoid interrupting a running deployment.
 
-Le job effectue :
+The job performs these steps:
 
-1. Checkout du commit et installation par `npm ci`.
-2. Configuration d’EAS CLI (`latest`) via `expo/expo-github-action@v8` et `EXPO_TOKEN`.
-3. `npm run typecheck`, `npm test`, `npm run lint`, `npm run build:web`.
-4. `eas deploy --prod --non-interactive` uniquement si les étapes précédentes réussissent.
+1. Check out the commit and install dependencies with `npm ci`.
+2. Configure EAS CLI (`latest`) through `expo/expo-github-action@v8` and `EXPO_TOKEN`.
+3. Run `npm run typecheck`, `npm test`, `npm run lint`, and `npm run build:web`.
+4. Run `eas deploy --prod --non-interactive` only if the previous steps succeed.
 
-Le workflow ne se déclenche pas sur les PR et ne crée ni tag ni release GitHub. La procédure de [contribution](../CONTRIBUTING.md) décrit les validations avant fusion. Une fusion réussie n’est pas une preuve de déploiement réussi.
+The workflow does not run on PRs or create GitHub tags or releases. The [contribution guide](../CONTRIBUTING.md) describes validation before merging. A successful merge does not prove that deployment succeeded.
 
-### Configuration initiale des accès
+### Initial access setup
 
-Un mainteneur disposant des accès au projet Expo et aux secrets du dépôt doit :
+A maintainer with access to the Expo project and repository secrets must:
 
-1. Vérifier que Hosting est initialisé pour ce projet et que son sous-domaine est choisi avant le premier déploiement non interactif.
-2. Créer un jeton d’accès personnel Expo pour un compte autorisé à déployer ce projet.
-3. Ajouter le jeton au dépôt GitHub sous **Settings → Secrets and variables → Actions → New repository secret**, avec le nom `EXPO_TOKEN`.
-4. Suivre la première exécution de `Deploy production` et vérifier les URLs retournées.
+1. Check that Hosting is initialized for this project and its subdomain is selected before the first non-interactive deployment.
+2. Create an Expo personal access token for an account authorized to deploy this project.
+3. Add the token to the GitHub repository under **Settings → Secrets and variables → Actions → New repository secret**, using the name `EXPO_TOKEN`.
+4. Follow the first `Deploy production` run and verify the returned URLs.
 
-Le secret est fourni à l’action Expo qui configure l’authentification pour la suite du job. Ne jamais le mettre dans `app.json`, une variable `EXPO_PUBLIC_*`, un fichier committé ou les notes de PR. Le workflow actuel ne déclare pas d’environnement GitHub avec approbation manuelle ; l’autorisation de déployer découle de la fusion vers `main`.
+The secret is passed to the Expo action, which configures authentication for the rest of the job. Never put it in `app.json`, an `EXPO_PUBLIC_*` variable, a committed file, or PR notes. The current workflow does not declare a GitHub environment with manual approval; merging into `main` authorizes the deployment.
 
-## Vérifier une livraison
+## Verifying a delivery
 
-Depuis une machine disposant de GitHub CLI authentifié, remplacer les paramètres ci-dessous par les valeurs observées :
+From a machine with authenticated GitHub CLI, replace the placeholders below with observed values:
 
 ```bash
 gh run list --workflow deploy-production.yml --commit <sha> --limit 5
@@ -40,19 +40,19 @@ gh run view <run-id>
 gh run view <run-id> --log-failed
 ```
 
-La dernière commande sert au diagnostic d’un échec. Associer le SHA du run réussi à l’ID et à l’URL immuable affichés par EAS. Vérifier cette URL et l’alias de production, avec un paramètre de requête unique pour éviter une réponse périmée :
+The last command is for diagnosing a failure. Associate the successful run's SHA with the deployment ID and immutable URL printed by EAS. Check that URL and the production alias, using a unique query parameter to avoid a stale response:
 
 ```bash
-curl --fail --silent --show-error -o /dev/null -w '%{http_code}\n' 'https://<url-deploiement>/?check=<identifiant-unique>'
-curl --fail --silent --show-error -o /dev/null -w '%{http_code}\n' 'https://<url-production>/?check=<identifiant-unique>'
-curl --head --fail 'https://<url-production>/sw.js'
+curl --fail --silent --show-error -o /dev/null -w '%{http_code}\n' 'https://<deployment-url>/?check=<unique-id>'
+curl --fail --silent --show-error -o /dev/null -w '%{http_code}\n' 'https://<production-url>/?check=<unique-id>'
+curl --head --fail 'https://<production-url>/sw.js'
 ```
 
-Attendre un statut `200` pour les pages et vérifier dans le navigateur la collection, le journal, les réglages et la mise à jour PWA. Une réponse HTTP seule ne valide pas ces interactions. Consigner le SHA, le run, les URLs et les contrôles réalisés dans la release lorsqu’une release versionnée est demandée.
+Expect a `200` status for the pages, and check the collection, journal, settings, and PWA update flow in the browser. An HTTP response alone does not validate these interactions. Record the SHA, run, URLs, and checks performed in the release when a versioned release is requested.
 
-## Prévisualisation et reprise
+## Preview deployments and recovery
 
-Pour une prévisualisation web demandée, depuis une branche validée et avec un compte Expo autorisé :
+For a requested web preview, from a validated branch and with an authorized Expo account:
 
 ```bash
 npm run build:web
@@ -60,53 +60,53 @@ npx --yes eas-cli@latest whoami
 npx --yes eas-cli@latest deploy --non-interactive
 ```
 
-Une session locale peut être ouverte par `npx --yes eas-cli@latest login`. L’option `--prod` est réservée à la production ; un déploiement sans cette option fournit une URL de prévisualisation. La première initialisation Hosting peut nécessiter une session interactive. Voir les [déploiements et alias EAS](https://docs.expo.dev/eas/hosting/deployments-and-aliases/).
+Start a local session with `npx --yes eas-cli@latest login`. The `--prod` option is reserved for production; deployment without that option provides a preview URL. Initial Hosting setup may require an interactive session. See [EAS deployments and aliases](https://docs.expo.dev/eas/hosting/deployments-and-aliases/).
 
-Si la CI échoue avant la publication, corriger le code par PR ou réparer les accès selon le diagnostic. Pour relancer un échec transitoire du **même SHA**, vérifier d’abord qu’il est toujours le commit à livrer et qu’aucun déploiement plus récent n’a pris sa place, puis utiliser `gh run rerun <run-id> --failed`. Le workflow ne propose pas de déclenchement manuel `workflow_dispatch`.
+If CI fails before publishing, fix the code through a PR or repair access according to the diagnosis. To retry a transient failure for the **same SHA**, first check that it is still the commit to deliver and that no newer deployment has replaced it, then use `gh run rerun <run-id> --failed`. The workflow does not provide a manual `workflow_dispatch` trigger.
 
-Si EAS a publié mais qu’une vérification ultérieure échoue, inspecter Hosting avant de relancer : un nouveau déploiement n’est pas automatiquement nécessaire. Éviter de publier manuellement le même commit pendant que GitHub Actions le déploie.
+If EAS has published but a later check fails, inspect Hosting before retrying: a new deployment is not automatically necessary. Avoid manually publishing the same commit while GitHub Actions is deploying it.
 
-## Retour arrière
+## Rollback
 
-Identifier un déploiement précédemment vérifié, conserver ses ID/SHA/URL et vérifier qu’aucun job de production en cours ne remplacera immédiatement le retour arrière. Pour une restauration de production autorisée :
-
-```bash
-npx --yes eas-cli@latest deploy:alias --prod --id <id-deploiement-valide>
-```
-
-Cette commande réassigne l’alias à un déploiement existant, sans reconstruire le code. Vérifier ensuite l’alias et la PWA. Corriger ou réverter le changement fautif sur une branche `fix/<sujet>` via PR pour que les prochaines fusions ne réintroduisent pas le problème. Ne pas réécrire `main` ni déplacer les tags existants. La syntaxe de promotion est décrite dans la [documentation EAS](https://docs.expo.dev/eas/hosting/deployments-and-aliases/).
-
-## Versions et releases GitHub
-
-Un déploiement à chaque fusion ne nécessite pas forcément un nouveau numéro de version. Lorsqu’une release est demandée :
-
-1. Choisir une version SemVer non utilisée. Mettre à jour ensemble `expo.version` dans `app.json`, `version` dans `package.json` et les métadonnées racines de `package-lock.json`, sur une branche temporaire via PR.
-2. Valider et fusionner la PR dans le cadre de l’autorisation de livraison ; retenir le **SHA de fusion**, qui peut différer du SHA de la branche.
-3. Attendre le déploiement GitHub Actions correspondant et vérifier la production avant de taguer.
-4. Créer la release sur ce SHA exact, avec des notes en français rédigées dans un fichier :
+Identify a previously verified deployment, retain its ID/SHA/URL, and check that no running production job will immediately overwrite the rollback. For an authorized production restore:
 
 ```bash
-gh release create <tag-vX.Y.Z> --target <sha-deploye> --title <titre> --notes-file <fichier-notes>
+npx --yes eas-cli@latest deploy:alias --prod --id <known-good-deployment-id>
 ```
 
-Vérifier au préalable que le tag et la release n’existent ni localement ni à distance. Vérifier ensuite la release avec `gh release view <tag-vX.Y.Z>`, récupérer les tags et contrôler le SHA avec `git rev-list -n 1 <tag-vX.Y.Z>`. Si seule la création de release échoue, reprendre cette étape sans redéployer. Le [skill de release](../.agents/skills/release-production/SKILL.md) guide les agents sur cette même procédure.
+This command reassigns the alias to an existing deployment without rebuilding the code. Then verify the alias and PWA. Fix or revert the faulty change on a `fix/<topic>` branch through a PR so subsequent merges do not reintroduce the problem. Do not rewrite `main` or move existing tags. The promotion syntax is described in the [EAS documentation](https://docs.expo.dev/eas/hosting/deployments-and-aliases/).
 
-## Cache et mises à jour PWA
+## Versions and GitHub releases
 
-Workbox précache les ressources de `dist/`, active immédiatement le nouveau service worker et nettoie les anciens caches. `app/+html.tsx` vérifie les mises à jour au chargement et au retour au premier plan ; la bannière web propose de recharger lorsqu’une nouvelle version prend le contrôle.
+Deploying after every merge does not necessarily require a new version number. When a release is requested:
 
-[public/_headers](../public/_headers) exprime les règles pour les hébergeurs compatibles avec le format Netlify/Cloudflare Pages : pas de cache pour `sw.js`, revalidation du HTML/manifeste et cache long pour les bundles avec hash. La présence de ce fichier ne prouve pas qu’EAS applique ces directives. Examiner les en-têtes HTTP réels et la [politique de cache EAS](https://docs.expo.dev/eas/hosting/reference/caching/) avant de diagnostiquer une mise à jour bloquée. Ne pas effacer le stockage du navigateur de l’utilisateur pour forcer une mise à jour : il contient ses observations.
+1. Choose an unused SemVer version. Update `expo.version` in `app.json`, `version` in `package.json`, and the root metadata in `package-lock.json` together, on a temporary branch through a PR.
+2. Validate and merge the PR within the scope of the delivery authorization; record the **merge SHA**, which may differ from the branch SHA.
+3. Wait for the corresponding GitHub Actions deployment and verify production before tagging.
+4. Create the release on that exact SHA, with English notes written to a file:
 
-## Builds natifs
+```bash
+gh release create <tag-vX.Y.Z> --target <deployed-sha> --title <title> --notes-file <notes-file>
+```
 
-[eas.json](../eas.json) définit deux profils de **build natif**, indépendants de l’alias web : `preview` en distribution interne et `production`, tous deux avec incrément automatique du numéro de build. Les versions de build sont gérées à distance (`appVersionSource: remote`).
+First verify that the tag and release do not exist locally or remotely. Then verify the release with `gh release view <tag-vX.Y.Z>`, fetch the tags, and check the SHA with `git rev-list -n 1 <tag-vX.Y.Z>`. If only release creation fails, resume that step without redeploying. The [release skill](../.agents/skills/release-production/SKILL.md) guides agents through the same procedure.
 
-Pour une construction iOS explicitement demandée, avec les accès et identifiants de signature configurés :
+## Caching and PWA updates
+
+Workbox precaches resources from `dist/`, immediately activates the new service worker, and cleans up old caches. `app/+html.tsx` checks for updates on load and when the application returns to the foreground; the web banner offers to reload when a new version takes control.
+
+[public/_headers](../public/_headers) defines rules for hosts supporting the Netlify/Cloudflare Pages format: no caching for `sw.js`, revalidation of HTML/the manifest, and long-lived caching for hashed bundles. The presence of this file does not prove EAS applies those directives. Inspect actual HTTP headers and the [EAS caching policy](https://docs.expo.dev/eas/hosting/reference/caching/) before diagnosing a stuck update. Do not clear the user's browser storage to force an update: it contains their observations.
+
+## Native builds
+
+[eas.json](../eas.json) defines two **native build** profiles, independent of the web alias: `preview` for internal distribution and `production`, both with automatic build number increments. Build versions are managed remotely (`appVersionSource: remote`).
+
+For an explicitly requested iOS build, with access and signing credentials configured:
 
 ```bash
 npx --yes eas-cli@latest build --platform ios --profile preview
-# Ou pour un binaire destiné à la distribution en production :
+# Or for a binary intended for production distribution:
 npx --yes eas-cli@latest build --platform ios --profile production
 ```
 
-L’identifiant iOS est `com.kevinbacas.plated`. L’identifiant `android.package` n’est pas encore défini ; le configurer avant une première livraison Android. Aucun workflow de publication aux stores, profil `submit` ou mécanisme EAS Update n’est configuré dans ce dépôt. Un build natif ne constitue pas une soumission aux stores, et la CI web ne valide pas un binaire natif.
+The iOS identifier is `com.kevinbacas.plated`. The `android.package` identifier is not yet defined; configure it before the first Android delivery. No store publication workflow, `submit` profile, or EAS Update mechanism is configured in this repository. A native build is not a store submission, and web CI does not validate native binaries.
