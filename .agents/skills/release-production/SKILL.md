@@ -34,7 +34,7 @@ Write release notes in English from the diff and commits since the latest stable
 ## 3. Use a pull request
 
 1. Inspect `git status`, `git diff`, and `git diff --cached`. Stage only relevant files with `git add -- <explicit-paths>`, then commit on the temporary branch.
-2. Push that branch, open or update its PR targeting `main`, and record validation results. The repository currently has no PR workflow; production workflow checks run after merging.
+2. Push that branch, open or update its PR targeting `main`, and record validation results. Wait for the `PR validation` check from `.github/workflows/pr-ci.yml` to pass. The production workflow repeats application checks after merging.
 3. When delivery includes merging and the PR is validated, respect branch protections and all required checks. If a required review is missing or a check fails, report the specific step to resolve; do not force the merge.
 4. Record the exact merged commit SHA and fetch remote references. Use this SHA for the remaining steps, not the branch head SHA before merging. Delete the temporary branch after merging, preserving any remaining local work.
 

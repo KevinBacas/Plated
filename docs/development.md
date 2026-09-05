@@ -39,7 +39,7 @@ For an Expo dependency, use `npx expo install <package>` to select a version com
 | `public/`, `assets/` | PWA manifest, assets copied during the build, and images |
 | `tests/` | Tests for the catalog, search, progress, theme, and contrast |
 | `workbox-config.cjs` | Service worker precaching, activation, and offline navigation |
-| `.github/workflows/` | Validation and deployment after a push to `main` |
+| `.github/workflows/` | PR validation before merging, and production validation/deployment after a push to `main` |
 | `.agents/skills/release-production/` | Release procedure for an agent |
 
 The application entry point is `expo-router/entry`. Screens read the catalog and call `useObservations()`. The provider serializes observations as JSON under `plated.observations.v1`, then updates React state. The `expo-sqlite/localStorage/install` import provides the storage API on mobile; the web uses browser storage. The theme preference is stored separately under `plated.theme-preference`.
@@ -90,6 +90,8 @@ npm run lint
 npm run build:web
 git diff --check
 ```
+
+[PR CI](../.github/workflows/pr-ci.yml) runs these application checks on Ubuntu with Node from `.nvmrc`, plus a whitespace check of the complete PR and verification of the generated PWA files. It does not need Expo credentials. See [Contributing](../CONTRIBUTING.md) for triggers and branch protection setup.
 
 Existing tests cover pure logic, not a full UI session or actual persistence on a device. Also test the affected user flow: adding an observation, reloading, viewing the journal, or changing the theme, as appropriate.
 

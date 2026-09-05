@@ -43,4 +43,6 @@ Before changing the project, create a temporary branch from an up-to-date `main`
 | `npm run lint` | Run ESLint with the Expo configuration |
 | `npm run build:web` | Export the site to `dist/` and generate the Workbox service worker |
 
+PRs targeting `main` run [PR CI](.github/workflows/pr-ci.yml): whitespace checks, TypeScript, unit tests, lint, and the web PWA build. See [Contributing](CONTRIBUTING.md) for the required-check setup.
+
 `main` is the only permanent branch and the production branch. Each merge triggers the GitHub Actions web deployment; the SHA of the last successful deployment identifies the version actually running in production.

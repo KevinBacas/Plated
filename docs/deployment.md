@@ -17,7 +17,7 @@ The job performs these steps:
 3. Run `npm run typecheck`, `npm test`, `npm run lint`, and `npm run build:web`.
 4. Run `eas deploy --prod --non-interactive` only if the previous steps succeed.
 
-The workflow does not run on PRs or create GitHub tags or releases. The [contribution guide](../CONTRIBUTING.md) describes validation before merging. A successful merge does not prove that deployment succeeded.
+The deployment workflow does not run on PRs or create GitHub tags or releases. The separate [PR CI](../.github/workflows/pr-ci.yml) workflow validates PRs without Expo secrets or deployment access; the [contribution guide](../CONTRIBUTING.md) explains how to make its check mandatory. Production repeats the application checks on the merged commit before publishing. A successful merge does not prove that deployment succeeded.
 
 ### Initial access setup
 

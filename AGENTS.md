@@ -27,7 +27,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before 
 
 - For application changes, run `npm run typecheck`, `npm test`, `npm run lint`, `npm run build:web`, and `git diff --check`. For documentation-only changes, verify affected paths, versions, links, and commands plus `git diff --check`.
 - Validate changed user flows on the affected platform. Unit tests cover pure logic; a web build does not prove native or PWA update behavior.
-- The repository currently has no PR validation workflow. Production checks run after a push to `main`; report local results and any unperformed checks in the PR.
+- `.github/workflows/pr-ci.yml` runs the `PR validation` check on PRs targeting `main`: whitespace, TypeScript, unit tests, lint, web build, and PWA output. Wait for it to pass before merging; report local results and any unperformed platform checks in the PR.
 - Keep package and lockfile changes together. Use `npx expo install` for Expo-compatible dependencies. Do not commit generated `dist/`, `.expo/`, `expo-env.d.ts`, `ios/`, or `android/`.
 
 # Deployment and releases
