@@ -40,6 +40,7 @@ function persistThemePreference(preference: ThemePreference) {
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const systemColorScheme = useSystemColorScheme();
+  const [isHydrated, setIsHydrated] = useState(process.env.EXPO_OS !== 'web');
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(() => {
     return process.env.EXPO_OS === 'web' ? 'system' : getStoredThemePreference();
   });
@@ -47,6 +48,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (process.env.EXPO_OS === 'web') {
       setThemePreferenceState(getStoredThemePreference());
+      setIsHydrated(true);
     }
   }, []);
 
@@ -61,8 +63,13 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     persistThemePreference(preference);
   }, []);
 
-  const colorScheme: AppColorScheme =
-    themePreference === 'system' ? (systemColorScheme ?? 'light') : themePreference;
+  // Static HTML is rendered in light mode. Match it during web hydration so React
+  // does not leave server-rendered styles (such as the tab bar) stuck in light mode.
+  const colorScheme: AppColorScheme = !isHydrated
+    ? 'light'
+    : themePreference === 'system'
+      ? (systemColorScheme ?? 'light')
+      : themePreference;
   const colors = AppColors[colorScheme];
 
   useEffect(() => {
