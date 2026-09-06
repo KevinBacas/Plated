@@ -10,7 +10,7 @@ import type { Observation } from '@/lib/observations';
 
 export default function JournalScreen() {
   const { colors } = useAppTheme();
-  const { observations, deleteObservation } = useObservations();
+  const { observations, sessions, deleteObservation } = useObservations();
   const remove = (observation: Observation) => Alert.alert('Supprimer l’observation ?', 'Cette action ne peut pas être annulée.', [
     { text: 'Annuler', style: 'cancel' },
     { text: 'Supprimer', style: 'destructive', onPress: () => deleteObservation(observation.id) },
@@ -32,6 +32,7 @@ export default function JournalScreen() {
           </View>
         ) : observations.map((observation) => {
           const target = getTargetById(observation.targetId);
+          const session = sessions.find((item) => item.id === observation.sessionId);
           if (!target) return null;
 
           return (
@@ -41,6 +42,7 @@ export default function JournalScreen() {
                 <View style={styles.copy}>
                   <Text style={[styles.name, { color: colors.text }]}>{target.name}</Text>
                   <Text style={[styles.date, { color: colors.subduedText }]}>{formatDate(observation.observedAt)}</Text>
+                  <Text style={[styles.date, { color: colors.mutedText }]}>{session ? `Session du ${formatDate(session.startedAt)}` : 'Hors session'}</Text>
                 </View>
                 <Pressable hitSlop={10} onPress={() => remove(observation)}><MaterialIcons name="delete-outline" size={23} color={colors.danger} /></Pressable>
               </View>

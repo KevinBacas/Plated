@@ -3,13 +3,16 @@ import 'expo-sqlite/localStorage/install';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { TargetType } from '@/data/targets';
+import { createJournalStore, type Journal } from '@/lib/journal-storage';
 import type { Observation } from '@/lib/observations';
+import { getActiveSession, type TripSession } from '@/lib/sessions';
 
-const STORAGE_KEY = 'plated.observations.v1';
-
-type ObservationContextValue = {
-  observations: Observation[];
+type ObservationContextValue = Journal & {
+  activeSession: TripSession | null;
   loading: boolean;
+  error: string | null;
+  startSession: () => Promise<void>;
+  endSession: (id: string) => Promise<void>;
   addObservation: (targetId: string, targetType: TargetType) => Promise<Observation>;
   undoObservation: (id: string) => Promise<void>;
   deleteObservation: (id: string) => Promise<void>;
@@ -18,54 +21,45 @@ type ObservationContextValue = {
 
 const ObservationContext = createContext<ObservationContextValue | null>(null);
 
-function readObservations(): Observation[] {
-  if (typeof globalThis.localStorage === 'undefined') return [];
-  try {
-    const stored = globalThis.localStorage.getItem(STORAGE_KEY);
-    const observations = stored ? JSON.parse(stored) : [];
-    return Array.isArray(observations) ? observations : [];
-  } catch {
-    return [];
-  }
-}
-
-function persist(observations: Observation[]) {
-  globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(observations));
-}
-
-function makeId() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+function getStore() {
+  if (typeof globalThis.localStorage === 'undefined') throw new Error('Stockage indisponible.');
+  return createJournalStore(globalThis.localStorage);
 }
 
 export function ObservationsProvider({ children }: PropsWithChildren) {
-  const [observations, setObservations] = useState<Observation[]>([]);
+  const [journal, setJournal] = useState<Journal>({ observations: [], sessions: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setObservations(readObservations());
+    try {
+      setJournal(getStore().read());
+      setError(null);
+    } catch {
+      setError('Impossible de lire le journal. Vos données enregistrées sont conservées. Réessayez.');
+    }
   }, []);
 
   useEffect(() => {
     refresh().finally(() => setLoading(false));
   }, [refresh]);
 
-  const commit = useCallback((next: Observation[]) => {
-    persist(next);
-    setObservations(next);
-  }, []);
-
   const value = useMemo<ObservationContextValue>(() => ({
-    observations,
+    ...journal,
+    activeSession: getActiveSession(journal.sessions),
     loading,
+    error,
     refresh,
+    startSession: async () => setJournal(getStore().startSession()),
+    endSession: async (id) => setJournal(getStore().endSession(id)),
     addObservation: async (targetId, targetType) => {
-      const observation: Observation = { id: makeId(), targetId, targetType, observedAt: new Date().toISOString(), note: null };
-      commit([observation, ...observations]);
-      return observation;
+      const result = getStore().addObservation(targetId, targetType);
+      setJournal(result.journal);
+      return result.observation;
     },
-    undoObservation: async (id) => commit(observations.filter((observation) => observation.id !== id)),
-    deleteObservation: async (id) => commit(observations.filter((observation) => observation.id !== id)),
-  }), [commit, loading, observations, refresh]);
+    undoObservation: async (id) => setJournal(getStore().deleteObservation(id)),
+    deleteObservation: async (id) => setJournal(getStore().deleteObservation(id)),
+  }), [error, journal, loading, refresh]);
 
   return <ObservationContext.Provider value={value}>{children}</ObservationContext.Provider>;
 }

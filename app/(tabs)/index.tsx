@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/components/theme-provider';
 import { PlateCode } from '@/components/plate-code';
+import { SessionControl } from '@/components/session-control';
 import type { AppThemeColors } from '@/constants/app-theme';
 import { useObservations } from '@/context/observations';
 import { COUNTRIES, DEPARTMENTS, type Target, type TargetType } from '@/data/targets';
@@ -61,6 +62,7 @@ export default function CollectionScreen() {
   const [kind, setKind] = useState<TargetType>('department');
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ observation: Observation; target: Target } | null>(null);
 
   const stats = useMemo(() => {
@@ -86,8 +88,13 @@ export default function CollectionScreen() {
     : { 'Pays de l’Union européenne': visible };
 
   const handleAdd = async (target: Target) => {
-    const observation = await addObservation(target.id, target.type);
-    setPending({ observation, target });
+    setActionError(null);
+    try {
+      const observation = await addObservation(target.id, target.type);
+      setPending({ observation, target });
+    } catch {
+      setActionError('Impossible d’enregistrer l’observation. Réessayez.');
+    }
   };
 
   if (loading) {
@@ -117,6 +124,8 @@ export default function CollectionScreen() {
             <Text style={[styles.progressLabel, { color: colors.mutedText }]}>pays de l’UE</Text>
           </View>
         </View>
+        <SessionControl showLink />
+        {actionError && <Text accessibilityRole="alert" style={{ color: colors.danger, marginBottom: 12 }}>{actionError}</Text>}
         <View style={[styles.segment, { backgroundColor: colors.surfaceMuted }]}>
           <Chip active={kind === 'department'} colors={colors} label="Départements" onPress={() => { setKind('department'); setFilter('all'); }} />
           <Chip active={kind === 'country'} colors={colors} label="Pays UE" onPress={() => { setKind('country'); setFilter('all'); }} />
@@ -147,7 +156,10 @@ export default function CollectionScreen() {
             <Text style={[styles.snackTitle, { color: colors.snackTitle }]}>{pending.target.name} ajouté</Text>
             <Text style={[styles.snackText, { color: colors.snackText }]}>Observation enregistrée maintenant</Text>
           </View>
-          <Pressable onPress={async () => { await undoObservation(pending.observation.id); setPending(null); }} style={styles.snackAction}><Text style={[styles.snackActionText, { color: colors.accentStrong }]}>ANNULER</Text></Pressable>
+          <Pressable onPress={async () => {
+            try { await undoObservation(pending.observation.id); setPending(null); setActionError(null); }
+            catch { setActionError('Impossible d’annuler l’observation. Réessayez.'); }
+          }} style={styles.snackAction}><Text style={[styles.snackActionText, { color: colors.accentStrong }]}>ANNULER</Text></Pressable>
         </View>
       )}
     </SafeAreaView>
