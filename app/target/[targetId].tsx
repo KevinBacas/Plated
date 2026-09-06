@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/components/theme-provider';
 import { PlateCode } from '@/components/plate-code';
+import { SessionControl } from '@/components/session-control';
 import { useObservations } from '@/context/observations';
 import { getTargetById } from '@/data/targets';
 import { formatDate } from '@/lib/format';
@@ -15,7 +16,8 @@ export default function TargetScreen() {
   const { colors } = useAppTheme();
   const { targetId } = useLocalSearchParams<{ targetId: string }>();
   const target = getTargetById(targetId);
-  const { observations, addObservation, deleteObservation, undoObservation } = useObservations();
+  const { observations, sessions, loading, error, addObservation, deleteObservation, undoObservation } = useObservations();
+  const [actionError, setActionError] = useState<string | null>(null);
   const [pending, setPending] = useState<Observation | null>(null);
   const entries = useMemo(() => observations.filter((observation) => observation.targetId === targetId), [observations, targetId]);
 
@@ -29,12 +31,16 @@ export default function TargetScreen() {
     { text: 'Annuler', style: 'cancel' },
     { text: 'Supprimer', style: 'destructive', onPress: () => deleteObservation(entry.id) },
   ]);
-  const add = async () => setPending(await addObservation(target.id, target.type));
+  const add = async () => {
+    setActionError(null);
+    try { setPending(await addObservation(target.id, target.type)); }
+    catch { setActionError('Impossible d’enregistrer l’observation. Réessayez.'); }
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable style={styles.back} onPress={() => router.back()}><MaterialIcons name="arrow-back" size={22} color={colors.text} /><Text style={[styles.backText, { color: colors.text }]}>Collection</Text></Pressable>
+        <Pressable style={styles.back} onPress={() => router.back()}><MaterialIcons name="arrow-back" size={22} color={colors.text} /><Text style={[styles.backText, { color: colors.text }]}>Retour</Text></Pressable>
         <View style={styles.hero}>
           <PlateCode code={target.code} type={target.type} large />
           <View style={styles.heroCopy}><Text style={[styles.title, { color: colors.text }]}>{target.flag ? `${target.flag}  ` : ''}{target.name}</Text><Text style={[styles.region, { color: colors.mutedText }]}>{target.region ?? `Code visible sur la plaque : ${target.code}`}</Text></View>
@@ -43,15 +49,33 @@ export default function TargetScreen() {
           <View style={styles.stat}><Text style={[styles.statNumber, { color: colors.text }]}>{entries.length}</Text><Text style={[styles.statLabel, { color: colors.subduedText }]}>observation{entries.length > 1 ? 's' : ''}</Text></View>
           <View style={styles.stat}><Text style={[styles.statDate, { color: colors.text }]}>{firstSeen ? formatDate(firstSeen) : '—'}</Text><Text style={[styles.statLabel, { color: colors.subduedText }]}>première fois</Text></View>
         </View>
-        <Pressable style={[styles.add, { backgroundColor: colors.accent }]} onPress={add}><MaterialIcons name="add" size={23} color={colors.surface} /><Text style={[styles.addText, { color: colors.surface }]}>Ajouter une observation</Text></Pressable>
+        <SessionControl showLink />
+        {actionError && <Text accessibilityRole="alert" style={{ color: colors.danger, marginBottom: 12 }}>{actionError}</Text>}
+        <Pressable accessibilityRole="button" disabled={loading || !!error} style={[styles.add, { backgroundColor: colors.accent }]} onPress={add}><MaterialIcons name="add" size={23} color={colors.surface} /><Text style={[styles.addText, { color: colors.surface }]}>Ajouter une observation</Text></Pressable>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Historique {lastSeen ? `· dernière le ${formatDate(lastSeen)}` : ''}</Text>
         {entries.length === 0 ? (
           <View style={[styles.empty, { backgroundColor: colors.surface, borderColor: colors.border }]}><Text style={[styles.emptyTitle, { color: colors.text }]}>Pas encore observé</Text><Text style={[styles.emptyCopy, { color: colors.subduedText }]}>Lorsque vous croiserez cette plaque, ajoutez-la ici.</Text></View>
-        ) : entries.map((entry) => (
-          <View key={entry.id} style={[styles.entry, { backgroundColor: colors.surface, borderColor: colors.border }]}><View style={styles.entryTop}><Text style={[styles.entryDate, { color: colors.text }]}>{formatDate(entry.observedAt)}</Text><Pressable onPress={() => remove(entry)} hitSlop={10}><MaterialIcons name="delete-outline" size={22} color={colors.danger} /></Pressable></View></View>
-        ))}
+        ) : entries.map((entry) => {
+          const session = sessions.find((item) => item.id === entry.sessionId);
+          return (
+            <View key={entry.id} style={[styles.entry, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={styles.entryTop}>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={[styles.entryDate, { color: colors.text }]}>{formatDate(entry.observedAt)}</Text>
+                  <Text style={{ color: colors.mutedText, fontSize: 12 }}>{session ? `Session du ${formatDate(session.startedAt)}` : 'Hors session'}</Text>
+                </View>
+                <Pressable accessibilityRole="button" accessibilityLabel="Supprimer l’observation" onPress={() => remove(entry)} hitSlop={10}>
+                  <MaterialIcons name="delete-outline" size={22} color={colors.danger} />
+                </Pressable>
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
-      {pending ? <View style={[styles.snack, { backgroundColor: colors.snackBackground }]}><Text style={[styles.snackCopy, { color: colors.snackTitle }]}>Observation ajoutée</Text><Pressable onPress={async () => { await undoObservation(pending.id); setPending(null); }}><Text style={[styles.snackAction, { color: colors.accentStrong }]}>ANNULER</Text></Pressable></View> : null}
+      {pending ? <View style={[styles.snack, { backgroundColor: colors.snackBackground }]}><Text style={[styles.snackCopy, { color: colors.snackTitle }]}>Observation ajoutée</Text><Pressable onPress={async () => {
+        try { await undoObservation(pending.id); setPending(null); setActionError(null); }
+        catch { setActionError('Impossible d’annuler l’observation. Réessayez.'); }
+      }}><Text style={[styles.snackAction, { color: colors.accentStrong }]}>ANNULER</Text></Pressable></View> : null}
     </SafeAreaView>
   );
 }

@@ -30,6 +30,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="sessions"
+        options={{
+          title: 'Sessions',
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="route" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="journal"
         options={{
           title: 'Journal',
