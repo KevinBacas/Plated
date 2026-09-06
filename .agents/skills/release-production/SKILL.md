@@ -1,32 +1,23 @@
 ---
 name: release-production
-description: "Publier une version complète de Plated en production, de la validation locale à la release GitHub. Utiliser quand l'utilisateur demande de livrer, publier, déployer ou releaser les changements du dépôt Plated : vérifier le code, commit directement sur main, push vers origin/main, déployer la PWA avec Expo EAS Hosting, créer un tag et une release GitHub avec des notes, vérifier la production et restituer les notes dans le chat."
+description: "Deliver a Plated web release through a pull request to main, follow the automatic EAS Hosting deployment, verify production, then create the GitHub tag and release. Use when the user requests a production delivery or release."
 ---
 
 # Release Production
 
-Exécuter le workflow depuis la racine du dépôt Plated. Traiter l'invocation explicite de ce skill comme l'autorisation des mutations listées dans sa description, mais demander confirmation avant toute mutation supplémentaire.
+Run from the repository root. Read `AGENTS.md`, `CONTRIBUTING.md`, `docs/deployment.md`, and the [Expo SDK 54 documentation](https://docs.expo.dev/versions/v54.0.0/). The deployment guide is the reference procedure; this skill coordinates its execution and release verification.
 
-## 1. Préparer la release
+An explicit release request authorizes the operations needed for that delivery, subject to branch rules and environment permissions. A request limited to preparing a PR ends at the PR. Do not commit or push directly to `main`; do not bypass required reviews or checks.
 
-1. Lire `AGENTS.md` et la documentation exacte d'Expo SDK 54.
-2. Exécuter `scripts/release-context.sh` depuis ce dossier et inspecter ses résultats.
-3. Arrêter avant toute mutation distante si :
-   - la branche courante n'est pas `main` ;
-   - `main` diverge de `origin/main` ou a du retard ;
-   - des fichiers modifiés ne relèvent manifestement pas de la release ;
-   - l'authentification GitHub ou Expo est absente ;
-   - une release ou un tag portant la version prévue existe déjà.
-4. Ne jamais écraser l'historique, forcer un push, réutiliser un tag ou supprimer une release.
-5. Déterminer la version :
-   - prendre la version explicitement demandée, si présente ;
-   - sinon, prendre `v<expo.version>` si aucun tag SemVer n'existe ;
-   - sinon, incrémenter le patch du dernier tag `vMAJEUR.MINEUR.PATCH` ;
-   - choisir une montée mineure ou majeure seulement si la portée des changements l'exige clairement, et l'annoncer avant les mutations.
+## 1. Prepare the version on a temporary branch
 
-## 2. Valider avant publication
+1. Inspect the branch, changes, and GitHub authentication. Preserve changes outside the scope of the release. Use Node 22 and `npm ci` as described in the development guide.
+2. Run `git fetch origin --tags`. For a new change, create a short-lived `feat/<topic>`, `fix/<topic>`, or `docs/<topic>` branch from an up-to-date `origin/main`. Resume an existing dedicated branch if it already contains the work to deliver.
+3. The `.agents/skills/release-production/scripts/release-context.sh` script can provide additional diagnostics. It is read-only with respect to remote services, but launches EAS CLI through `npx` and may require a download. Missing local Expo authentication does not block CI delivery if the GitHub secret works; manual EAS operations require their own access.
+4. Use the explicitly requested version. Otherwise, use `v<expo.version>` if no SemVer tag exists, or increment the patch of the latest stable tag. Announce a minor or major bump when the scope justifies it. Check that the version does not exist as a local/remote tag or GitHub release.
+5. Align the selected version in `app.json`, `package.json`, and the root metadata in `package-lock.json` on the branch. If the already-merged commit has the correct version, do not create an empty commit or unnecessary PR.
 
-Exécuter dans cet ordre et corriger les erreurs avant de continuer :
+## 2. Validate and prepare release notes
 
 ```bash
 npm run typecheck
@@ -36,61 +27,41 @@ npm run build:web
 git diff --check
 ```
 
-Vérifier aussi que `dist/index.html` et `dist/sw.js` existent. Ne jamais publier un build dont une vérification échoue.
+Check `dist/index.html`, `dist/manifest.json`, and `dist/sw.js`. Fix errors before continuing. Unit tests do not replace verifying the affected flow in the browser.
 
-## 3. Préparer les notes
+Write release notes in English from the diff and commits since the latest stable tag. Use only the relevant sections among New features, Improvements, Fixes, and Validation. Mention only confirmed changes and checks. Save the notes to a file to pass with `--notes-file`.
 
-Rédiger en français une note concise à partir du diff et des commits depuis le dernier tag. Utiliser seulement les sections pertinentes :
+## 3. Use a pull request
 
-- `Nouveautés`
-- `Améliorations`
-- `Corrections`
-- `Vérifications`
+1. Inspect `git status`, `git diff`, and `git diff --cached`. Stage only relevant files with `git add -- <explicit-paths>`, then commit on the temporary branch.
+2. Push that branch, open or update its PR targeting `main`, and record validation results. Wait for the `PR validation` check from `.github/workflows/pr-ci.yml` to pass. The production workflow repeats application checks after merging.
+3. When delivery includes merging and the PR is validated, respect branch protections and all required checks. If a required review is missing or a check fails, report the specific step to resolve; do not force the merge.
+4. Record the exact merged commit SHA and fetch remote references. Use this SHA for the remaining steps, not the branch head SHA before merging. Delete the temporary branch after merging, preserving any remaining local work.
 
-Ne pas inventer de changement. Mentionner les contrôles réellement réussis et conserver exactement le même texte pour la release GitHub et le message final.
+## 4. Follow the automatic deployment
 
-## 4. Commit et push sur main
+Each push to `main` triggers `.github/workflows/deploy-production.yml`. Find the run corresponding to the merge SHA and use GitHub tools to wait for it to succeed. Do not run a second `eas deploy --prod` while CI is publishing the same commit.
 
-1. Inspecter `git status`, `git diff` et `git diff --cached`.
-2. Ajouter uniquement les fichiers confirmés avec `git add -- <chemins explicites>`. Ne jamais utiliser `git add .`, `-A` ou `--all`.
-3. Si des changements existent, créer un commit Conventional Commit décrivant la release. Si le worktree est propre, utiliser le commit `HEAD` sans créer de commit vide.
-4. Enregistrer le SHA exact avec `git rev-parse HEAD`.
-5. Pousser avec `git push origin main`.
-6. Vérifier que `HEAD` et `origin/main` ont le même SHA.
+Keep the run ID, SHA, EAS deployment ID, immutable URL, and production URL. Verify HTTP responses and the web/PWA flows described in `docs/deployment.md`. Use a unique query parameter for the alias. If a later commit has already replaced the alias, distinguish the target SHA's deployment from the version currently live; do not claim the former is still production.
 
-## 5. Déployer Expo en production
+If CI or verification fails, do not create a new tag/release. Diagnose the current state and perform only the necessary recovery described in the deployment guide. Retrying an old run can put an old commit back into production: check for newer deployments before retrying. A rollback uses a previously validated deployment and does not rewrite `main`.
 
-Le build web ayant déjà réussi, publier avec :
+## 5. Create and verify the GitHub release
+
+Only after verifying the deployment:
+
+1. Check again that the tag and release do not exist. Never overwrite history, force a push, or reuse an existing tag for another version.
+2. Create a published, non-draft release targeting the deployed SHA:
 
 ```bash
-npx --yes eas-cli@latest deploy --prod --non-interactive
+gh release create <tag> --target <deployed-sha> --title <title> --notes-file <notes-file>
 ```
 
-Conserver l'URL immuable du déploiement et l'URL de production retournées. Vérifier les deux avec une requête HTTP et exiger un statut `200`. Pour éviter une réponse CDN périmée sur l'alias, ajouter un paramètre de requête unique lors du contrôle.
+3. This command creates the remote tag if it is absent; do not add `git push --tags`.
+4. Verify with `gh release view <tag>`, then `git fetch --tags origin` and `git rev-list -n 1 <tag>`, that the release exists and its tag points to the exact verified SHA.
 
-Si le déploiement échoue, ne pas créer de tag ni de release. Rapporter que le commit est déjà poussé et donner la commande de reprise.
+If this step fails after deployment, inspect remote objects before retrying. Resume only the missing creation or verification step, without redeploying or deleting an existing release.
 
-## 6. Créer le tag et la release GitHub
+## 6. Report the result
 
-Après validation du déploiement uniquement :
-
-1. Vérifier à nouveau que la version n'existe ni comme tag local/distant, ni comme release GitHub.
-2. Créer une release GitHub non brouillon ciblant le SHA déployé avec `gh release create <tag> --target <sha> --title <titre> --notes <notes>`.
-3. Cette commande doit créer et pousser le tag ; ne pas lancer un second `git push --tags` sans nécessité prouvée.
-4. Vérifier avec `gh release view <tag>` que la release est publiée et pointe vers le bon tag.
-5. Exécuter `git fetch --tags origin`, puis confirmer que le tag local et le SHA déployé correspondent.
-
-Si la création de release échoue après le déploiement, ne pas redéployer. Diagnostiquer l'état distant, puis reprendre uniquement la création ou la vérification manquante.
-
-## 7. Restituer dans le chat
-
-Donner :
-
-- la version et le SHA ;
-- l'URL de production et l'URL du déploiement ;
-- l'URL de la release GitHub ;
-- le résultat des validations ;
-- les notes de release exactes ;
-- tout avertissement utile, notamment le délai de mise à jour du service worker PWA.
-
-N'annoncer le succès complet que si commit/push, déploiement, contrôles HTTP, tag et release GitHub sont tous vérifiés.
+Provide the version, SHA, PR, run, production/deployment/release URLs, checks performed, and any limitations. Include the published notes without inventing results. Only report a release as complete when merging, deployment, verification, and the tag/release are confirmed.

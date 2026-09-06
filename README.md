@@ -1,61 +1,48 @@
 # Plated
 
-Un journal de plaques local, conçu pour noter rapidement les départements français et les pays de l’Union européenne croisés sur la route. La version web est installable sur l’écran d’accueil d’un iPhone.
+A license plate journal for recording the French departments and European Union countries spotted on the road. The built-in catalog contains 101 departments and 26 EU countries, with France covered by its departments.
 
-## Version web installable
+The application shares its code across iOS, Android, and the web. The web version is an installable PWA: on iPhone, open the production URL in Safari, then choose **Share → Add to Home Screen**.
 
-Après déploiement, ouvrez l’URL dans Safari sur iPhone, touchez Partager puis **Sur l’écran d’accueil**. Les observations sont conservées dans le navigateur de chaque téléphone et restent donc indépendantes.
+Observations are stored locally on each device: browser `localStorage` on the web and SQLite-backed storage on mobile. There are no user accounts, application servers, or synchronization between devices. Clearing site data or uninstalling the native application may delete the journal.
 
-## Lancer en local
+## Quick start
 
-1. Installe [Expo Go](https://expo.dev/go) sur l’iPhone.
-2. Dans ce dossier, exécute `npm install`, puis `npm start`.
-3. Scanne le QR code affiché avec Expo Go.
-
-Les observations restent sur le téléphone, dans une base SQLite locale. Désinstaller l’application efface donc le journal.
-
-## Déploiement web et mises à jour
-
-Le build web génère un service worker Workbox. Lorsqu'une nouvelle version prend le contrôle de la PWA,
-une bannière propose de recharger l'application. La recherche de mise à jour est relancée au démarrage et
-chaque fois que la PWA revient au premier plan.
-
-Le fichier `public/_headers` configure le cache pour les hébergeurs qui prennent en charge le format
-Netlify/Cloudflare Pages. Sur un autre hébergeur, appliquez les mêmes règles dans sa configuration :
-
-- `/sw.js` ne doit pas être mis en cache ;
-- les pages HTML et le manifeste doivent être revalidés ;
-- les bundles sous `/_expo/static/`, dont le nom contient un hash, peuvent être conservés un an.
-
-## Vérifications
+Prerequisites: Git, **Node.js 22**, and npm. With [nvm](https://github.com/nvm-sh/nvm), the major version is defined in [.nvmrc](.nvmrc), matching the production workflow.
 
 ```bash
-npm test
-npm run typecheck
-npm run lint
+git clone https://github.com/KevinBacas/Plated.git
+cd Plated
+nvm install
+nvm use
+npm ci
+npm run web
 ```
 
-Le catalogue embarqué contient 101 départements français et 26 pays de l’Union européenne — la France est couverte par les départements.
+Without nvm, install Node 22 and then run the npm commands. Open the address printed by Expo, usually `http://localhost:8081`. No `.env` file, Expo secret, or external service is required to develop the application or run checks.
 
-## Stratégie de branches
+Before changing the project, create a temporary branch from an up-to-date `main`: see [Contributing](CONTRIBUTING.md).
 
-Le dépôt suit une variante simple du **trunk-based development**, proche de GitHub Flow :
+## Documentation
 
-- `main` est l’unique branche permanente et représente toujours la production ;
-- chaque fonctionnalité ou correction est développée sur une branche temporaire créée depuis un `main` à jour (`feat/<sujet>`, `fix/<sujet>` ou `docs/<sujet>`) ;
-- la branche temporaire est testée indépendamment, puis intégrée directement dans `main` par pull request après validation ;
-- les branches doivent rester courtes, ciblées et être supprimées après leur fusion ;
-- il n’existe pas de branche permanente `develop`, `staging` ou `release` : les environnements et versions déployées sont identifiés par le commit ou le tag issu de `main`.
+- [Local development and architecture](docs/development.md): stack, versions, directories, mobile development, tests, and agent setup.
+- [Contributing](CONTRIBUTING.md): branches, validation, pull requests, and merging.
+- [Deployment and releases](docs/deployment.md): EAS Hosting, the GitHub secret, verification, recovery, and rollback.
+- [Agent instructions](AGENTS.md): conventions to follow when making changes.
 
-Ce modèle est couramment employé dans l’industrie sous les noms de **trunk-based development** ou **GitHub Flow**. Il convient bien à ce dépôt tant que `main` est protégée : les vérifications automatiques doivent réussir, la pull request doit être validée et le déploiement doit pouvoir être annulé rapidement. Une correction urgente suit le même circuit sur une branche `fix/<sujet>` afin de ne pas contourner ces garanties.
+## Main commands
 
-## Déploiement web en production
+| Command | Purpose |
+| --- | --- |
+| `npm ci` | Install the exact versions from `package-lock.json` |
+| `npm start` | Start Metro / Expo |
+| `npm run web` | Develop in the browser |
+| `npm run ios` / `npm run android` | Start Expo and open the configured native target |
+| `npm test` | Run unit tests with the Node test runner through `tsx` |
+| `npm run typecheck` | Check TypeScript without generating JavaScript |
+| `npm run lint` | Run ESLint with the Expo configuration |
+| `npm run build:web` | Export the site to `dist/` and generate the Workbox service worker |
 
-Chaque commit poussé sur `main` déclenche le workflow GitHub Actions
-`.github/workflows/deploy-production.yml`. Le workflow valide l'application, puis
-la publie sur EAS Hosting avec `eas deploy --prod --non-interactive`.
+PRs targeting `main` run [PR CI](.github/workflows/pr-ci.yml): whitespace checks, TypeScript, unit tests, lint, and the web PWA build. See [Contributing](CONTRIBUTING.md) for the required-check setup.
 
-Pour autoriser le déploiement sans connexion Expo locale, créez un jeton d'accès
-personnel dans Expo, puis ajoutez-le au dépôt GitHub en tant que secret Actions
-nommé `EXPO_TOKEN` (`Settings` > `Secrets and variables` > `Actions`). Ce secret
-est uniquement transmis à l'action Expo pendant le déploiement.
+`main` is the only permanent branch and the production branch. Each merge triggers the GitHub Actions web deployment; the SHA of the last successful deployment identifies the version actually running in production.
