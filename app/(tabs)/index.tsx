@@ -1,10 +1,11 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/components/theme-provider';
+import { ObservationSnackbar } from '@/components/observation-snackbar';
 import { PlateCode } from '@/components/plate-code';
 import { SessionControl } from '@/components/session-control';
 import type { AppThemeColors } from '@/constants/app-theme';
@@ -64,6 +65,19 @@ export default function CollectionScreen() {
   const [query, setQuery] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ observation: Observation; target: Target } | null>(null);
+
+  const dismissNotification = useCallback((id: string) => {
+    setPending((current) => current && current.observation.id === id ? null : current);
+  }, []);
+  const undoNotification = async (id: string) => {
+    try {
+      await undoObservation(id);
+      dismissNotification(id);
+      setActionError(null);
+    } catch {
+      setActionError('Impossible d’annuler l’observation. Réessayez.');
+    }
+  };
 
   const stats = useMemo(() => {
     const values = new Map<string, { count: number; lastSeen: string }>();
@@ -151,16 +165,13 @@ export default function CollectionScreen() {
         {!visible.length && <View style={styles.empty}><Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune plaque trouvée</Text><Text style={[styles.emptyCopy, { color: colors.subduedText }]}>Essaie un autre code, nom ou filtre.</Text></View>}
       </ScrollView>
       {pending && (
-        <View style={[styles.snack, { backgroundColor: colors.snackBackground }]}>
-          <View style={styles.snackCopy}>
-            <Text style={[styles.snackTitle, { color: colors.snackTitle }]}>{pending.target.name} ajouté</Text>
-            <Text style={[styles.snackText, { color: colors.snackText }]}>Observation enregistrée maintenant</Text>
-          </View>
-          <Pressable onPress={async () => {
-            try { await undoObservation(pending.observation.id); setPending(null); setActionError(null); }
-            catch { setActionError('Impossible d’annuler l’observation. Réessayez.'); }
-          }} style={styles.snackAction}><Text style={[styles.snackActionText, { color: colors.accentStrong }]}>ANNULER</Text></Pressable>
-        </View>
+        <ObservationSnackbar
+          key={pending.observation.id}
+          observationId={pending.observation.id}
+          title={`${pending.target.name} ajouté`}
+          onDismiss={dismissNotification}
+          onUndo={undoNotification}
+        />
       )}
     </SafeAreaView>
   );
@@ -197,10 +208,4 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 44 },
   emptyTitle: { fontSize: 17, fontWeight: '800' },
   emptyCopy: { marginTop: 4 },
-  snack: { position: 'absolute', left: 14, right: 14, bottom: 12, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  snackCopy: { flex: 1 },
-  snackTitle: { fontWeight: '800' },
-  snackText: { fontSize: 12, marginTop: 2 },
-  snackAction: { paddingVertical: 9 },
-  snackActionText: { fontSize: 11, fontWeight: '900' },
 });
