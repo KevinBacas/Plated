@@ -34,7 +34,7 @@ export default function SessionDetailScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, maxWidth: 760, width: '100%', alignSelf: 'center', paddingBottom: 50 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Retour aux sessions" onPress={() => router.canGoBack() ? router.back() : router.replace('/sessions')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}><MaterialIcons name="arrow-back" size={22} color={colors.text} /><Text style={{ color: colors.text, fontWeight: '800' }}>Sessions</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Retour aux sessions" onPress={() => router.dismissTo('/sessions')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}><MaterialIcons name="arrow-back" size={22} color={colors.text} /><Text style={{ color: colors.text, fontWeight: '800' }}>Sessions</Text></Pressable>
         {loading ? <ActivityIndicator color={colors.accent} /> : error ? <View><Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text><Pressable accessibilityRole="button" onPress={refresh} style={{ minHeight: 44 }}><Text style={{ color: colors.accent }}>Réessayer</Text></Pressable></View> : !session || !insights ? <Text style={{ color: colors.text }}>Session introuvable.</Text> : <>
           <View style={{ gap: 6 }}>
             <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '900' }}>{session.endedAt ? 'TRAJET TERMINÉ' : 'SESSION EN COURS'}</Text>

@@ -1,6 +1,6 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -14,13 +14,15 @@ import { findCodeTargets } from '@/lib/collection';
 
 export default function QuickEntryScreen() {
   const { colors } = useAppTheme();
-  const { activeSession, observations, loading, error, refresh, addObservation } = useObservations();
+  const { activeSession, observations, lastAdded, loading, error, refresh, addObservation } = useObservations();
   const [kind, setKind] = useState<TargetType>('department');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const input = useRef<TextInput>(null);
   const lock = useRef(false);
+  const lastAddedId = lastAdded?.id;
+  useEffect(() => { input.current?.focus(); }, [lastAddedId]);
   const matches = findCodeTargets(kind, code);
   const target = matches.length === 1 ? matches[0] : null;
   const count = activeSession ? observations.filter((entry) => entry.sessionId === activeSession.id).length : null;
@@ -49,7 +51,7 @@ export default function QuickEntryScreen() {
             <FilterChip active={kind === 'department'} label="Départements" disabled={busy} onPress={() => changeKind('department')} />
             <FilterChip active={kind === 'country'} label="Pays" disabled={busy} onPress={() => changeKind('country')} />
           </View>
-          <TextInput ref={input} accessibilityLabel="Code de la plaque" autoFocus selectTextOnFocus value={code} onChangeText={setCode} editable={!loading && !error} autoCapitalize="characters" autoCorrect={false} spellCheck={false} maxLength={3} returnKeyType="done" submitBehavior="submit" onSubmitEditing={() => void add()}
+          <TextInput ref={input} accessibilityLabel="Code de la plaque" autoFocus selectTextOnFocus value={code} onChangeText={setCode} editable={!loading && !error} autoCapitalize="characters" autoCorrect={false} spellCheck={false} maxLength={3} returnKeyType="done" blurOnSubmit={false} submitBehavior="submit" onSubmitEditing={() => void add()}
             placeholder={kind === 'department' ? '75, 2A, 971…' : 'D, UK, CH…'} placeholderTextColor={colors.subduedText}
             style={{ borderWidth: 2, borderColor: colors.accent, backgroundColor: colors.surface, color: colors.text, borderRadius: 18, padding: 20, fontSize: 36, fontWeight: '800', textAlign: 'center' }} />
           <View style={{ minHeight: 78, backgroundColor: colors.surface, borderRadius: 16, padding: 16, justifyContent: 'center' }}>
