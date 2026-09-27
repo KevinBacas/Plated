@@ -4,4 +4,5 @@ export type Observation = {
   targetType: 'department' | 'country';
   observedAt: string;
   note: string | null;
+  sessionId?: string | null;
 };

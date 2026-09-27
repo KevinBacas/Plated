@@ -6,6 +6,12 @@ The application shares its code across iOS, Android, and the web. The web versio
 
 Observations are stored locally on each device: browser `localStorage` on the web and SQLite-backed storage on mobile. There are no user accounts, application servers, or synchronization between devices. Clearing site data or uninstalling the native application may delete the journal.
 
+## Trip sessions
+
+Start a session from **Collection**, a plate detail, or the **Sessions** tab before a car trip. New observations join the active session automatically. Finish it when you arrive; the recap shows the start/end dates, duration, total sightings, unique departments and countries, the plates spotted, and a podium of the three most encountered French regions. The podium counts department sightings, including repeated sightings; countries and observations outside the session do not contribute. Ties use French alphabetical order. With fewer than three regions, only the recorded regions appear. Expand **Voir les plaques** to see counts and the last sighting for each plate.
+
+Only one session can be active at a time, and it survives closing/reopening the app. The global collection and journal include every observation. Existing observations and new sightings recorded without an active session remain **Hors session**. Undoing or deleting an observation also updates its session recap. Sessions are stored locally on the same device as the journal.
+
 ## Quick start
 
 Prerequisites: Git, **Node.js 22**, and npm. With [nvm](https://github.com/nvm-sh/nvm), the major version is defined in [.nvmrc](.nvmrc), matching the production workflow.

@@ -1,11 +1,13 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/components/theme-provider';
+import { ObservationSnackbar } from '@/components/observation-snackbar';
 import { PlateCode } from '@/components/plate-code';
+import { SessionControl } from '@/components/session-control';
 import type { AppThemeColors } from '@/constants/app-theme';
 import { useObservations } from '@/context/observations';
 import { COUNTRIES, DEPARTMENTS, type Target, type TargetType } from '@/data/targets';
@@ -58,10 +60,27 @@ function TargetRow({ target, count, lastSeen, onAdd }: { target: Target; count: 
 export default function CollectionScreen() {
   const { colors } = useAppTheme();
   const { observations, loading, addObservation, undoObservation } = useObservations();
+  const scrollRef = useRef<ScrollView>(null);
+  const searchRef = useRef<TextInput>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [kind, setKind] = useState<TargetType>('department');
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ observation: Observation; target: Target } | null>(null);
+
+  const dismissNotification = useCallback((id: string) => {
+    setPending((current) => current && current.observation.id === id ? null : current);
+  }, []);
+  const undoNotification = async (id: string) => {
+    try {
+      await undoObservation(id);
+      dismissNotification(id);
+      setActionError(null);
+    } catch {
+      setActionError('Impossible d’annuler l’observation. Réessayez.');
+    }
+  };
 
   const stats = useMemo(() => {
     const values = new Map<string, { count: number; lastSeen: string }>();
@@ -86,8 +105,13 @@ export default function CollectionScreen() {
     : { 'Pays de l’Union européenne': visible };
 
   const handleAdd = async (target: Target) => {
-    const observation = await addObservation(target.id, target.type);
-    setPending({ observation, target });
+    setActionError(null);
+    try {
+      const observation = await addObservation(target.id, target.type);
+      setPending({ observation, target });
+    } catch {
+      setActionError('Impossible d’enregistrer l’observation. Réessayez.');
+    }
   };
 
   if (loading) {
@@ -96,7 +120,7 @@ export default function CollectionScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" onScroll={(event) => setShowScrollTop(event.nativeEvent.contentOffset.y > 300)} scrollEventThrottle={100}>
         <View style={styles.header}>
           <View>
             <Text style={[styles.kicker, { color: colors.accent }]}>PLATED</Text>
@@ -117,13 +141,20 @@ export default function CollectionScreen() {
             <Text style={[styles.progressLabel, { color: colors.mutedText }]}>pays de l’UE</Text>
           </View>
         </View>
+        <SessionControl showLink />
+        {actionError && <Text accessibilityRole="alert" style={{ color: colors.danger, marginBottom: 12 }}>{actionError}</Text>}
         <View style={[styles.segment, { backgroundColor: colors.surfaceMuted }]}>
           <Chip active={kind === 'department'} colors={colors} label="Départements" onPress={() => { setKind('department'); setFilter('all'); }} />
           <Chip active={kind === 'country'} colors={colors} label="Pays UE" onPress={() => { setKind('country'); setFilter('all'); }} />
         </View>
         <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <MaterialIcons name="search" size={21} color={colors.subduedText} />
-          <TextInput value={query} onChangeText={setQuery} placeholder="Code ou nom de la plaque" placeholderTextColor={colors.subduedText} autoCapitalize="characters" style={[styles.searchInput, { color: colors.text }]} />
+          <TextInput ref={searchRef} value={query} onChangeText={setQuery} placeholder="Code ou nom de la plaque" placeholderTextColor={colors.subduedText} autoCapitalize="characters" style={[styles.searchInput, { color: colors.text }]} />
+          {query.length > 0 && (
+            <Pressable accessibilityRole="button" accessibilityLabel="Effacer la recherche" onPress={() => { setQuery(''); searchRef.current?.focus(); }} style={styles.clearSearch}>
+              <MaterialIcons name="close" size={20} color={colors.subduedText} />
+            </Pressable>
+          )}
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
           <Chip active={filter === 'all'} colors={colors} label="Tous" onPress={() => setFilter('all')} />
@@ -141,14 +172,23 @@ export default function CollectionScreen() {
         ))}
         {!visible.length && <View style={styles.empty}><Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune plaque trouvée</Text><Text style={[styles.emptyCopy, { color: colors.subduedText }]}>Essaie un autre code, nom ou filtre.</Text></View>}
       </ScrollView>
+      {showScrollTop && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Remonter tout en haut"
+          onPress={() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); setShowScrollTop(false); }}
+          style={[styles.scrollTop, { backgroundColor: colors.accent, bottom: pending ? 100 : 16 }]}>
+          <MaterialIcons name="arrow-upward" size={24} color={colors.surface} />
+        </Pressable>
+      )}
       {pending && (
-        <View style={[styles.snack, { backgroundColor: colors.snackBackground }]}>
-          <View style={styles.snackCopy}>
-            <Text style={[styles.snackTitle, { color: colors.snackTitle }]}>{pending.target.name} ajouté</Text>
-            <Text style={[styles.snackText, { color: colors.snackText }]}>Observation enregistrée maintenant</Text>
-          </View>
-          <Pressable onPress={async () => { await undoObservation(pending.observation.id); setPending(null); }} style={styles.snackAction}><Text style={[styles.snackActionText, { color: colors.accentStrong }]}>ANNULER</Text></Pressable>
-        </View>
+        <ObservationSnackbar
+          key={pending.observation.id}
+          observationId={pending.observation.id}
+          title={`${pending.target.name} ajouté`}
+          onDismiss={dismissNotification}
+          onUndo={undoNotification}
+        />
       )}
     </SafeAreaView>
   );
@@ -156,6 +196,8 @@ export default function CollectionScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+  clearSearch: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  scrollTop: { position: 'absolute', right: 20, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 20, paddingBottom: 118 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 },
@@ -185,10 +227,4 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 44 },
   emptyTitle: { fontSize: 17, fontWeight: '800' },
   emptyCopy: { marginTop: 4 },
-  snack: { position: 'absolute', left: 14, right: 14, bottom: 12, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  snackCopy: { flex: 1 },
-  snackTitle: { fontWeight: '800' },
-  snackText: { fontSize: 12, marginTop: 2 },
-  snackAction: { paddingVertical: 9 },
-  snackActionText: { fontSize: 11, fontWeight: '900' },
 });

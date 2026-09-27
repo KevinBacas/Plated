@@ -29,10 +29,11 @@ For an Expo dependency, use `npx expo install <package>` to select a version com
 | Path | Role |
 | --- | --- |
 | `app/_layout.tsx` | Theme and observation providers, root navigation |
-| `app/(tabs)/` | Collection, journal, and settings |
+| `app/(tabs)/` | Collection, trip sessions, journal, and settings |
 | `app/target/[targetId].tsx` | License plate details and observation history |
 | `app/+html.tsx` | Web HTML document, manifest, and service worker registration |
-| `context/observations.tsx` | Reading, adding, deleting, and persisting journal entries |
+| `context/observations.tsx` | Shared observation/session state and journal actions |
+| `lib/journal-storage.ts`, `lib/sessions.ts` | Local persistence, trip lifecycle, recaps, and duration formatting |
 | `data/targets.ts` | Static catalog of departments and countries |
 | `lib/` | Types and functions for formatting, search, progress, and theme preference |
 | `components/`, `hooks/`, `constants/` | Shared UI, platform variants, and colors |
@@ -42,7 +43,7 @@ For an Expo dependency, use `npx expo install <package>` to select a version com
 | `.github/workflows/` | PR validation before merging, and production validation/deployment after a push to `main` |
 | `.agents/skills/release-production/` | Release procedure for an agent |
 
-The application entry point is `expo-router/entry`. Screens read the catalog and call `useObservations()`. The provider serializes observations as JSON under `plated.observations.v1`, then updates React state. The `expo-sqlite/localStorage/install` import provides the storage API on mobile; the web uses browser storage. The theme preference is stored separately under `plated.theme-preference`.
+The application entry point is `expo-router/entry`. Screens read the catalog and call `useObservations()`. The provider uses `lib/journal-storage.ts` to persist observations as JSON under the existing `plated.observations.v1` key and trip sessions under `plated.sessions.v1`, then updates React state only after a successful write. Each observation optionally references a session with `sessionId`; legacy records are preserved without assigning them to a trip. Each session stores `id`, `startedAt`, and nullable `endedAt`. A null end date identifies the active trip, which resumes after reopening. Actions read current storage before writing so rapid actions do not replace an outdated React snapshot. Each action writes a single key. Unreadable JSON or a non-array value raises an error rather than overwriting saved data. Recaps are derived from observations, so undo and deletion update them automatically. The `expo-sqlite/localStorage/install` import provides the storage API on mobile; the web uses browser storage. The theme preference is stored separately under `plated.theme-preference`.
 
 There is no remote API or shared database to start, migrate, or seed. Development, preview, and production URLs have separate web storage. Preserve compatibility with existing data when changing storage keys or formats.
 
@@ -93,7 +94,7 @@ git diff --check
 
 [PR CI](../.github/workflows/pr-ci.yml) runs these application checks on Ubuntu with Node from `.nvmrc`, plus a whitespace check of the complete PR and verification of the generated PWA files. It does not need Expo credentials. See [Contributing](../CONTRIBUTING.md) for triggers and branch protection setup.
 
-Existing tests cover pure logic, not a full UI session or actual persistence on a device. Also test the affected user flow: adding an observation, reloading, viewing the journal, or changing the theme, as appropriate.
+Tests cover pure logic and session persistence with an in-memory storage adapter, including legacy records, reopening, consecutive trips, undo/deletion, storage failures, and the top-three regional podium. They do not replace a full UI session or actual persistence on a device. Also test the affected user flow: adding an observation, reloading, viewing the journal, or changing the theme, as appropriate.
 
 If the Metro cache is inconsistent, use `npx expo start --clear`. To diagnose incompatible Expo dependencies, use `npx expo install --check` and inspect the result before changing versions. Do not run `npm run reset-project` to repair an installation: this script moves existing screens and creates a new skeleton.
 
