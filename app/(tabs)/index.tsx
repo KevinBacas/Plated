@@ -1,6 +1,6 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -60,6 +60,9 @@ function TargetRow({ target, count, lastSeen, onAdd }: { target: Target; count: 
 export default function CollectionScreen() {
   const { colors } = useAppTheme();
   const { observations, loading, addObservation, undoObservation } = useObservations();
+  const scrollRef = useRef<ScrollView>(null);
+  const searchRef = useRef<TextInput>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [kind, setKind] = useState<TargetType>('department');
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
@@ -117,7 +120,7 @@ export default function CollectionScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" onScroll={(event) => setShowScrollTop(event.nativeEvent.contentOffset.y > 300)} scrollEventThrottle={100}>
         <View style={styles.header}>
           <View>
             <Text style={[styles.kicker, { color: colors.accent }]}>PLATED</Text>
@@ -146,7 +149,12 @@ export default function CollectionScreen() {
         </View>
         <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <MaterialIcons name="search" size={21} color={colors.subduedText} />
-          <TextInput value={query} onChangeText={setQuery} placeholder="Code ou nom de la plaque" placeholderTextColor={colors.subduedText} autoCapitalize="characters" style={[styles.searchInput, { color: colors.text }]} />
+          <TextInput ref={searchRef} value={query} onChangeText={setQuery} placeholder="Code ou nom de la plaque" placeholderTextColor={colors.subduedText} autoCapitalize="characters" style={[styles.searchInput, { color: colors.text }]} />
+          {query.length > 0 && (
+            <Pressable accessibilityRole="button" accessibilityLabel="Effacer la recherche" onPress={() => { setQuery(''); searchRef.current?.focus(); }} style={styles.clearSearch}>
+              <MaterialIcons name="close" size={20} color={colors.subduedText} />
+            </Pressable>
+          )}
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
           <Chip active={filter === 'all'} colors={colors} label="Tous" onPress={() => setFilter('all')} />
@@ -164,6 +172,15 @@ export default function CollectionScreen() {
         ))}
         {!visible.length && <View style={styles.empty}><Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune plaque trouvée</Text><Text style={[styles.emptyCopy, { color: colors.subduedText }]}>Essaie un autre code, nom ou filtre.</Text></View>}
       </ScrollView>
+      {showScrollTop && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Remonter tout en haut"
+          onPress={() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); setShowScrollTop(false); }}
+          style={[styles.scrollTop, { backgroundColor: colors.accent, bottom: pending ? 100 : 16 }]}>
+          <MaterialIcons name="arrow-upward" size={24} color={colors.surface} />
+        </Pressable>
+      )}
       {pending && (
         <ObservationSnackbar
           key={pending.observation.id}
@@ -179,6 +196,8 @@ export default function CollectionScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+  clearSearch: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  scrollTop: { position: 'absolute', right: 20, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 20, paddingBottom: 118 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 },
