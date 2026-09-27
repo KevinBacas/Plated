@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { COUNTRIES, DEPARTMENTS } from '../data/targets';
+import { COUNTRIES, DEPARTMENTS, EU_COUNTRIES } from '../data/targets';
 import { filterTargets, buildTargetProgress } from '../lib/target-stats';
 
 test('the embedded catalog has 101 departments and 26 EU countries without France', () => {
   assert.equal(DEPARTMENTS.length, 101);
-  assert.equal(COUNTRIES.length, 26);
+  assert.equal(EU_COUNTRIES.length, 26);
+  assert.equal(COUNTRIES.length, 29);
   assert.equal(COUNTRIES.some((country) => country.name === 'France'), false);
   assert.equal(COUNTRIES.find((country) => country.name === 'Allemagne')?.code, 'D');
   assert.equal(COUNTRIES.find((country) => country.name === 'Espagne')?.code, 'E');

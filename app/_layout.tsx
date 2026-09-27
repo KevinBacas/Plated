@@ -36,6 +36,8 @@ function RootNavigator() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="target/[targetId]" options={{ headerShown: false }} />
+          <Stack.Screen name="session/[sessionId]" options={{ headerShown: false }} />
+          <Stack.Screen name="quick-entry" options={{ headerShown: false }} />
         </Stack>
         <PwaUpdateBanner />
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />

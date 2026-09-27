@@ -33,10 +33,15 @@ function SessionCard({ session, observations }: { session: TripSession; observat
         </View>
         <View style={{ flex: 1, padding: 12, backgroundColor: colors.surfaceMuted, borderRadius: 12 }}>
           <Text selectable style={{ color: colors.text, fontSize: 23, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{summary.countries}</Text>
-          <Text style={{ color: colors.mutedText }}>pays de l’UE</Text>
+          <Text style={{ color: colors.mutedText }}>pays</Text>
         </View>
       </View>
       <RegionPodium regions={summary.topRegions} />
+      <Link href={{ pathname: '/session/[sessionId]', params: { sessionId: session.id } }} asChild>
+        <Pressable accessibilityRole="link" style={{ backgroundColor: colors.accentSoft, borderRadius: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: colors.accent, fontWeight: '800' }}>Bilan, découvertes et carte →</Text>
+        </Pressable>
+      </Link>
       {summary.total === 0 ? (
         <Text style={{ color: colors.mutedText, lineHeight: 20 }}>Aucune plaque observée pendant cette session.</Text>
       ) : (

@@ -1,11 +1,12 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/components/theme-provider';
-import { ObservationSnackbar } from '@/components/observation-snackbar';
+import { AddObservationButton } from '@/components/add-observation-button';
+import { ObservationFeedback } from '@/components/observation-feedback';
 import { PlateCode } from '@/components/plate-code';
 import { SessionControl } from '@/components/session-control';
 import { useObservations } from '@/context/observations';
@@ -17,22 +18,8 @@ export default function TargetScreen() {
   const { colors } = useAppTheme();
   const { targetId } = useLocalSearchParams<{ targetId: string }>();
   const target = getTargetById(targetId);
-  const { observations, sessions, loading, error, addObservation, deleteObservation, undoObservation } = useObservations();
+  const { observations, sessions, loading, error, addObservation, deleteObservation } = useObservations();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [pending, setPending] = useState<Observation | null>(null);
-  const dismissNotification = useCallback((id: string) => {
-    setPending((current) => current && current.id === id ? null : current);
-  }, []);
-  const undoNotification = async (id: string) => {
-    try {
-      await undoObservation(id);
-      dismissNotification(id);
-      setActionError(null);
-    } catch {
-      setActionError('Impossible d’annuler l’observation. Réessayez.');
-    }
-  };
-
   const entries = useMemo(() => observations.filter((observation) => observation.targetId === targetId), [observations, targetId]);
 
   if (!target) {
@@ -47,8 +34,8 @@ export default function TargetScreen() {
   ]);
   const add = async () => {
     setActionError(null);
-    try { setPending(await addObservation(target.id, target.type)); }
-    catch { setActionError('Impossible d’enregistrer l’observation. Réessayez.'); }
+    try { return await addObservation(target.id, target.type); }
+    catch (cause) { setActionError('Impossible d’enregistrer l’observation. Réessayez.'); throw cause; }
   };
 
   return (
@@ -65,7 +52,8 @@ export default function TargetScreen() {
         </View>
         <SessionControl showLink />
         {actionError && <Text accessibilityRole="alert" style={{ color: colors.danger, marginBottom: 12 }}>{actionError}</Text>}
-        <Pressable accessibilityRole="button" disabled={loading || !!error} style={[styles.add, { backgroundColor: colors.accent }]} onPress={add}><MaterialIcons name="add" size={23} color={colors.surface} /><Text style={[styles.addText, { color: colors.surface }]}>Ajouter une observation</Text></Pressable>
+        <AddObservationButton name={target.name} disabled={loading || !!error} onAdd={add} label="Ajouter une observation" />
+        <ObservationFeedback />
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Historique {lastSeen ? `· dernière le ${formatDate(lastSeen)}` : ''}</Text>
         {entries.length === 0 ? (
           <View style={[styles.empty, { backgroundColor: colors.surface, borderColor: colors.border }]}><Text style={[styles.emptyTitle, { color: colors.text }]}>Pas encore observé</Text><Text style={[styles.emptyCopy, { color: colors.subduedText }]}>Lorsque vous croiserez cette plaque, ajoutez-la ici.</Text></View>
@@ -86,15 +74,6 @@ export default function TargetScreen() {
           );
         })}
       </ScrollView>
-      {pending && (
-        <ObservationSnackbar
-          key={pending.id}
-          observationId={pending.id}
-          title="Observation ajoutée"
-          onDismiss={dismissNotification}
-          onUndo={undoNotification}
-        />
-      )}
     </SafeAreaView>
   );
 }
@@ -113,8 +92,6 @@ const styles = StyleSheet.create({
   statNumber: { fontSize: 25, fontWeight: '900' },
   statDate: { fontSize: 13, fontWeight: '800', minHeight: 30 },
   statLabel: { marginTop: 3, fontSize: 12 },
-  add: { minHeight: 54, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 26 },
-  addText: { fontWeight: '900', fontSize: 16 },
   sectionTitle: { fontSize: 15, fontWeight: '900', marginBottom: 10 },
   entry: { borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 9 },
   entryTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

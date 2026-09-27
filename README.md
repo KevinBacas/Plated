@@ -1,6 +1,6 @@
 # Plated
 
-A license plate journal for recording the French departments and European Union countries spotted on the road. The built-in catalog contains 101 departments and 26 EU countries, with France covered by its departments.
+A license plate journal for recording the French departments and European countries spotted on the road. The built-in catalog contains 101 departments and 29 countries (26 EU countries, plus the United Kingdom, Switzerland, and Monaco), with France covered by its departments.
 
 The application shares its code across iOS, Android, and the web. The web version is an installable PWA: on iPhone, open the production URL in Safari, then choose **Share → Add to Home Screen**.
 
@@ -11,6 +11,32 @@ Observations are stored locally on each device: browser `localStorage` on the we
 Start a session from **Collection**, a plate detail, or the **Sessions** tab before a car trip. New observations join the active session automatically. Finish it when you arrive; the recap shows the start/end dates, duration, total sightings, unique departments and countries, the plates spotted, and a podium of the three most encountered French regions. The podium counts department sightings, including repeated sightings; countries and observations outside the session do not contribute. Ties use French alphabetical order. With fewer than three regions, only the recorded regions appear. Expand **Voir les plaques** to see counts and the last sighting for each plate.
 
 Only one session can be active at a time, and it survives closing/reopening the app. The global collection and journal include every observation. Existing observations and new sightings recorded without an active session remain **Hors session**. Undoing or deleting an observation also updates its session recap. Sessions are stored locally on the same device as the journal.
+
+## Collection and quick entry
+
+Collection defaults to **Global**, including all trips and outside-session sightings.
+**Ce trajet** scopes counts, found/missing filters, and progress to the active trip.
+Categories **Tout**, **Départements**, and **Pays** support code/name/region searches;
+countries also have **UE** and **Hors UE** filters. Countries and region groups use
+French alphabetical order; departments stay ordered by code. EU completion remains
+separate from the expanded country catalog.
+
+After a successful addition, the add button briefly shows a check. A compact inline
+confirmation offers undo for the most recent addition until dismissed or replaced,
+including when moving between collection, quick entry, and plate details.
+
+**Saisie rapide** accepts exact plate codes (including `2A`, `2B`, `971`, `UK`, `CH`,
+and `MC`) and country aliases such as `GB` or `DE`. Nothing is saved while typing:
+confirm with the button or keyboard action. Successful entry clears the field and
+keeps focus for the next plate. Sightings join the active session automatically,
+or remain outside sessions when no trip is active.
+
+Open **Bilan, découvertes et carte** on a session for duration, total sightings,
+distinct departments/countries, EU progress, new global discoveries, and frequencies.
+A new global discovery is a target whose first surviving observation belongs to
+that session; deleting observations recalculates this metric. The offline department
+map uses fixed count bands (0, 1, 2–4, 5+) and labelled overseas insets. It represents
+plate department codes, not GPS locations. See [map attribution](docs/map-data.md).
 
 ## Quick start
 

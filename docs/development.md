@@ -17,6 +17,7 @@
 | Storage | `expo-sqlite` `16.0.10` and the `localStorage` API |
 | Animation | Declared versions: Reanimated `~4.1.1` and Worklets `0.5.1` |
 | Quality | ESLint `9.39.5`, `eslint-config-expo`, `tsx` `4.23.11`, and `node:test` |
+| Maps | `react-native-svg` `15.12.1`, bundled department geometry; see [map data](map-data.md) |
 | PWA | Workbox CLI `7.4.1`, manifest, and service worker |
 | Delivery | EAS Hosting; EAS CLI `>= 21.7.0` in `eas.json`, with `latest` used by the workflow |
 
@@ -30,6 +31,7 @@ For an Expo dependency, use `npx expo install <package>` to select a version com
 | --- | --- |
 | `app/_layout.tsx` | Theme and observation providers, root navigation |
 | `app/(tabs)/` | Collection, trip sessions, journal, and settings |
+| `app/quick-entry.tsx`, `app/session/[sessionId].tsx` | Exact-code entry and detailed session insights with an offline map |
 | `app/target/[targetId].tsx` | License plate details and observation history |
 | `app/+html.tsx` | Web HTML document, manifest, and service worker registration |
 | `context/observations.tsx` | Shared observation/session state and journal actions |
@@ -43,7 +45,7 @@ For an Expo dependency, use `npx expo install <package>` to select a version com
 | `.github/workflows/` | PR validation before merging, and production validation/deployment after a push to `main` |
 | `.agents/skills/release-production/` | Release procedure for an agent |
 
-The application entry point is `expo-router/entry`. Screens read the catalog and call `useObservations()`. The provider uses `lib/journal-storage.ts` to persist observations as JSON under the existing `plated.observations.v1` key and trip sessions under `plated.sessions.v1`, then updates React state only after a successful write. Each observation optionally references a session with `sessionId`; legacy records are preserved without assigning them to a trip. Each session stores `id`, `startedAt`, and nullable `endedAt`. A null end date identifies the active trip, which resumes after reopening. Actions read current storage before writing so rapid actions do not replace an outdated React snapshot. Each action writes a single key. Unreadable JSON or a non-array value raises an error rather than overwriting saved data. Recaps are derived from observations, so undo and deletion update them automatically. The `expo-sqlite/localStorage/install` import provides the storage API on mobile; the web uses browser storage. The theme preference is stored separately under `plated.theme-preference`.
+The application entry point is `expo-router/entry`. Screens read the catalog and call `useObservations()`. The provider uses `lib/journal-storage.ts` to persist observations as JSON under the existing `plated.observations.v1` key and trip sessions under `plated.sessions.v1`, then updates React state only after a successful write. Each observation optionally references a session with `sessionId`; legacy records are preserved without assigning them to a trip. Each session stores `id`, `startedAt`, and nullable `endedAt`. A null end date identifies the active trip, which resumes after reopening. Actions read current storage before writing so rapid actions do not replace an outdated React snapshot. Each action writes a single key. Unreadable JSON or a non-array value raises an error rather than overwriting saved data. Recaps are derived from observations, so undo and deletion update them automatically. The `lib/install-local-storage.native.ts` initializer imports `expo-sqlite/localStorage/install` on mobile; its web fallback leaves browser storage intact and avoids bundling the SQLite WASM worker. The theme preference is stored separately under `plated.theme-preference`.
 
 There is no remote API or shared database to start, migrate, or seed. Development, preview, and production URLs have separate web storage. Preserve compatibility with existing data when changing storage keys or formats.
 

@@ -22,5 +22,5 @@ export function buildTargetProgress(observations: Observation[]) {
 export function filterTargets(targets: Target[], query: string) {
   const normalizedQuery = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   if (!normalizedQuery) return targets;
-  return targets.filter((target) => `${target.code} ${target.name} ${target.region ?? ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalizedQuery));
+  return targets.filter((target) => `${target.code} ${target.name} ${target.region ?? ''} ${target.aliases?.join(' ') ?? ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalizedQuery));
 }
