@@ -84,6 +84,11 @@ The `serve` command downloads a utility for this task; it is not a project depen
 
 For PWA changes, check installation, an offline reload after a successful first load, and the update banner after serving a new build from the same origin. If an old service worker hides changes, unregister it and clear its cache in browser developer tools; avoid clearing `localStorage`, which contains the journal.
 
+The web build verifies that its application bundles and bundled icon/image assets
+appear in the service-worker precache. Expo places some assets below
+`assets/node_modules`, so Workbox must include that exported directory. The cache
+allows bundles up to 4 MiB and the verification fails if one is silently omitted.
+
 ### Checks and troubleshooting
 
 ```bash
