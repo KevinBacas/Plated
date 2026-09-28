@@ -14,10 +14,13 @@ Only one session can be active at a time, and it survives closing/reopening the 
 
 ## Collection and quick entry
 
-Collection defaults to **Global**, including all trips and outside-session sightings.
-**Ce trajet** scopes counts, found/missing filters, and progress to the active trip.
+Collection defaults to **Ce trajet** when a session starts or an active session is restored,
+and to **Global** when no session is active. **Global** includes all trips and
+outside-session sightings. **Ce trajet** scopes counts, found/missing filters, and
+progress to the active trip. You can switch back to Global during a trip.
 Categories **Tout**, **Départements**, and **Pays** support code/name/region searches;
-countries also have **UE** and **Hors UE** filters. Countries and region groups use
+**UE** and **Hors UE** show only matching countries, even under **Tout**, and the
+completion counter follows the selected country group. Countries and region groups use
 French alphabetical order; departments stay ordered by code. EU completion remains
 separate from the expanded country catalog.
 

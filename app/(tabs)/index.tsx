@@ -1,6 +1,6 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Link, router } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,12 +28,27 @@ export default function CollectionScreen() {
   const [scope, setScope] = useState<'global' | 'session'>('global');
   const [query, setQuery] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
+  const previousSessionId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const sessionId = activeSession?.id ?? null;
+    if (sessionId !== previousSessionId.current) {
+      setScope(sessionId ? 'session' : 'global');
+      previousSessionId.current = sessionId;
+    }
+  }, [activeSession?.id]);
+
   const inSession = scope === 'session' && !!activeSession;
   const entries = useMemo(() => scopeObservations(observations, inSession ? activeSession!.id : null), [observations, inSession, activeSession]);
   const progress = useMemo(() => buildTargetProgress(entries), [entries]);
   const visible = useMemo(() => selectTargets(entries, kind, countryFilter, filter, query), [entries, kind, countryFilter, filter, query]);
   const grouped = useMemo(() => groupTargets(visible), [visible]);
   const found = (targets: Target[]) => targets.filter((target) => progress.has(target.id)).length;
+  const countryStats = countryFilter === 'all' ? COUNTRIES : countryFilter === 'eu' ? EU_COUNTRIES : COUNTRIES.filter((target) => !target.eu);
+  const stats = [
+    ...(kind === 'all' && countryFilter === 'all' || kind === 'department' ? [{ targets: DEPARTMENTS, label: 'départements', showEuDetail: false }] : []),
+    ...(kind !== 'department' ? [{ targets: countryStats, label: countryFilter === 'eu' ? 'pays de l’UE' : countryFilter === 'other' ? 'pays hors UE' : 'pays', showEuDetail: countryFilter === 'all' }] : []),
+  ];
   const handleAdd = async (target: Target) => {
     setActionError(null);
     try { return await addObservation(target.id, target.type); }
@@ -54,11 +69,11 @@ export default function CollectionScreen() {
           <FilterChip active={inSession} label="Ce trajet" disabled={!activeSession} onPress={() => setScope('session')} />
         </View>
         <View style={styles.progressGrid}>
-          {[{ count: found(DEPARTMENTS), total: DEPARTMENTS.length, label: 'départements' }, { count: found(COUNTRIES), total: COUNTRIES.length, label: 'pays' }].map((stat) => (
+          {stats.map((stat) => (
             <View key={stat.label} style={[styles.progressCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.progressNumber, { color: colors.text }]}>{stat.count}<Text style={[styles.progressTotal, { color: colors.subduedText }]}> / {stat.total}</Text></Text>
+              <Text style={[styles.progressNumber, { color: colors.text }]}>{found(stat.targets)}<Text style={[styles.progressTotal, { color: colors.subduedText }]}> / {stat.targets.length}</Text></Text>
               <Text style={{ color: colors.mutedText }}>{stat.label}</Text>
-              {stat.label === 'pays' && <Text style={{ color: colors.mutedText, fontSize: 12, marginTop: 4 }}>dont {found(EU_COUNTRIES)} / {EU_COUNTRIES.length} de l’UE</Text>}
+              {stat.showEuDetail && <Text style={{ color: colors.mutedText, fontSize: 12, marginTop: 4 }}>dont {found(EU_COUNTRIES)} / {EU_COUNTRIES.length} de l’UE</Text>}
             </View>
           ))}
         </View>

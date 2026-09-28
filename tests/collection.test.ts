@@ -27,7 +27,7 @@ test('global and trip filters use the same scope for status and search', () => {
   const current = scopeObservations(entries, 'trip');
   assert.deepEqual(selectTargets(current, 'department', 'all', 'missing', '34').map((t) => t.id), ['department-34']);
   assert.deepEqual(selectTargets(entries, 'department', 'all', 'missing', '34'), []);
-  assert.deepEqual(selectTargets(current, 'all', 'other', 'found', '').map((t) => t.id).sort(), ['country-CH', 'department-75']);
+  assert.deepEqual(selectTargets(current, 'all', 'other', 'found', '').map((t) => t.id), ['country-CH']);
 });
 
 test('country expansion preserves IDs and EU completion while sorting French names', () => {
@@ -38,6 +38,8 @@ test('country expansion preserves IDs and EU completion while sorting French nam
   assert.equal(getTargetById('country-DE')?.code, 'D');
   assert.equal(selectTargets([], 'country', 'eu', 'all', '').length, 26);
   assert.equal(selectTargets([], 'country', 'other', 'all', '').length, 3);
+  assert.deepEqual(selectTargets([], 'all', 'other', 'all', '').map((t) => t.id).sort(), ['country-CH', 'country-GB', 'country-MC']);
+  assert.equal(selectTargets([], 'all', 'eu', 'all', '').length, 26);
   assert.deepEqual(selectTargets([], 'all', 'all', 'all', 'gb').map((t) => t.id), ['country-GB']);
 });
 

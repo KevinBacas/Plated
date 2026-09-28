@@ -15,7 +15,7 @@ export function selectTargets(observations: Observation[], kind: CollectionKind,
   const progress = buildTargetProgress(observations);
   const catalog = kind === 'department' ? DEPARTMENTS : kind === 'country' ? COUNTRIES : TARGETS;
   return filterTargets(catalog, query).filter((target) => {
-    const matchesCountry = target.type !== 'country' || countryFilter === 'all' || (countryFilter === 'eu' ? target.eu : !target.eu);
+    const matchesCountry = countryFilter === 'all' || (target.type === 'country' && (countryFilter === 'eu' ? target.eu : !target.eu));
     const found = progress.has(target.id);
     return matchesCountry && (filter === 'all' || (filter === 'found' ? found : !found));
   });
