@@ -1,23 +1,31 @@
-import { COUNTRIES, DEPARTMENTS, TARGETS, type Target, type TargetType } from '../data/targets';
+import { COUNTRIES, DEPARTMENTS, EU_COUNTRIES, TARGETS, type Target, type TargetType } from '../data/targets';
 import { normalize } from './format';
 import type { Observation } from './observations';
 import { buildTargetProgress, filterTargets } from './target-stats';
 
-export type CollectionKind = TargetType | 'all';
-export type CountryFilter = 'all' | 'eu' | 'other';
+export type CollectionCategory = 'all' | 'department' | 'eu' | 'other';
 export type CollectionFilter = 'all' | 'found' | 'missing';
+
+const NON_EU_COUNTRIES = COUNTRIES.filter((target) => !target.eu);
+
+export function collectionTargets(category: CollectionCategory) {
+  switch (category) {
+    case 'all': return TARGETS;
+    case 'department': return DEPARTMENTS;
+    case 'eu': return EU_COUNTRIES;
+    case 'other': return NON_EU_COUNTRIES;
+  }
+}
 
 export function scopeObservations(observations: Observation[], sessionId: string | null) {
   return sessionId === null ? observations : observations.filter((entry) => entry.sessionId === sessionId);
 }
 
-export function selectTargets(observations: Observation[], kind: CollectionKind, countryFilter: CountryFilter, filter: CollectionFilter, query: string) {
+export function selectTargets(observations: Observation[], category: CollectionCategory, filter: CollectionFilter, query: string) {
   const progress = buildTargetProgress(observations);
-  const catalog = kind === 'department' ? DEPARTMENTS : kind === 'country' ? COUNTRIES : TARGETS;
-  return filterTargets(catalog, query).filter((target) => {
-    const matchesCountry = countryFilter === 'all' || (target.type === 'country' && (countryFilter === 'eu' ? target.eu : !target.eu));
+  return filterTargets(collectionTargets(category), query).filter((target) => {
     const found = progress.has(target.id);
-    return matchesCountry && (filter === 'all' || (filter === 'found' ? found : !found));
+    return filter === 'all' || (filter === 'found' ? found : !found);
   });
 }
 

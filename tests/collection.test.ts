@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import paths from '../data/department-map.json';
 import { COUNTRIES, DEPARTMENTS, EU_COUNTRIES, getTargetById } from '../data/targets';
-import { findCodeTargets, groupTargets, scopeObservations, selectTargets } from '../lib/collection';
+import { collectionTargets, findCodeTargets, groupTargets, scopeObservations, selectTargets } from '../lib/collection';
 import { heatLevel } from '../lib/heatmap';
 import { createJournalStore, OBSERVATIONS_KEY } from '../lib/journal-storage';
 import type { Observation } from '../lib/observations';
@@ -23,11 +23,11 @@ const trip = { id: 'trip', startedAt: '2026-09-02T07:59:00Z', endedAt: '2026-09-
 test('global and trip filters use the same scope for status and search', () => {
   assert.equal(scopeObservations(entries, null).length, 6);
   assert.equal(scopeObservations(entries, 'trip').length, 4);
-  assert.equal(selectTargets(entries, 'all', 'all', 'found', '').length, 4);
+  assert.equal(selectTargets(entries, 'all', 'found', '').length, 4);
   const current = scopeObservations(entries, 'trip');
-  assert.deepEqual(selectTargets(current, 'department', 'all', 'missing', '34').map((t) => t.id), ['department-34']);
-  assert.deepEqual(selectTargets(entries, 'department', 'all', 'missing', '34'), []);
-  assert.deepEqual(selectTargets(current, 'all', 'other', 'found', '').map((t) => t.id), ['country-CH']);
+  assert.deepEqual(selectTargets(current, 'department', 'missing', '34').map((t) => t.id), ['department-34']);
+  assert.deepEqual(selectTargets(entries, 'department', 'missing', '34'), []);
+  assert.deepEqual(selectTargets(current, 'other', 'found', '').map((t) => t.id), ['country-CH']);
 });
 
 test('country expansion preserves IDs and EU completion while sorting French names', () => {
@@ -36,11 +36,13 @@ test('country expansion preserves IDs and EU completion while sorting French nam
   assert.equal(COUNTRIES[0].name, 'Allemagne');
   assert.ok(COUNTRIES.indexOf(getTargetById('country-CY')!) < COUNTRIES.indexOf(getTargetById('country-HR')!));
   assert.equal(getTargetById('country-DE')?.code, 'D');
-  assert.equal(selectTargets([], 'country', 'eu', 'all', '').length, 26);
-  assert.equal(selectTargets([], 'country', 'other', 'all', '').length, 3);
-  assert.deepEqual(selectTargets([], 'all', 'other', 'all', '').map((t) => t.id).sort(), ['country-CH', 'country-GB', 'country-MC']);
-  assert.equal(selectTargets([], 'all', 'eu', 'all', '').length, 26);
-  assert.deepEqual(selectTargets([], 'all', 'all', 'all', 'gb').map((t) => t.id), ['country-GB']);
+  assert.equal(collectionTargets('all').length, 130);
+  assert.equal(collectionTargets('department').length, 101);
+  assert.equal(collectionTargets('eu').length, 26);
+  assert.deepEqual(collectionTargets('other').map((t) => t.id).sort(), ['country-CH', 'country-GB', 'country-MC']);
+  assert.equal(selectTargets([], 'eu', 'all', '').length, 26);
+  assert.equal(selectTargets([], 'other', 'all', '').length, 3);
+  assert.deepEqual(selectTargets([], 'all', 'all', 'gb').map((t) => t.id), ['country-GB']);
 });
 
 test('region groups sort in French and keep department codes in order', () => {

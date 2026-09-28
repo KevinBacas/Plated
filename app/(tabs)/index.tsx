@@ -12,7 +12,7 @@ import { SessionControl } from '@/components/session-control';
 import { useAppTheme } from '@/components/theme-provider';
 import { useObservations } from '@/context/observations';
 import { COUNTRIES, DEPARTMENTS, EU_COUNTRIES, type Target } from '@/data/targets';
-import { groupTargets, scopeObservations, selectTargets, type CollectionFilter, type CollectionKind, type CountryFilter } from '@/lib/collection';
+import { collectionTargets, groupTargets, scopeObservations, selectTargets, type CollectionCategory, type CollectionFilter } from '@/lib/collection';
 import { formatDate } from '@/lib/format';
 import { buildTargetProgress } from '@/lib/target-stats';
 
@@ -22,8 +22,7 @@ export default function CollectionScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const searchRef = useRef<TextInput>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [kind, setKind] = useState<CollectionKind>('all');
-  const [countryFilter, setCountryFilter] = useState<CountryFilter>('all');
+  const [category, setCategory] = useState<CollectionCategory>('all');
   const [filter, setFilter] = useState<CollectionFilter>('all');
   const [scope, setScope] = useState<'global' | 'session'>('global');
   const [query, setQuery] = useState('');
@@ -41,20 +40,18 @@ export default function CollectionScreen() {
   const inSession = scope === 'session' && !!activeSession;
   const entries = useMemo(() => scopeObservations(observations, inSession ? activeSession!.id : null), [observations, inSession, activeSession]);
   const progress = useMemo(() => buildTargetProgress(entries), [entries]);
-  const visible = useMemo(() => selectTargets(entries, kind, countryFilter, filter, query), [entries, kind, countryFilter, filter, query]);
+  const visible = useMemo(() => selectTargets(entries, category, filter, query), [entries, category, filter, query]);
   const grouped = useMemo(() => groupTargets(visible), [visible]);
   const found = (targets: Target[]) => targets.filter((target) => progress.has(target.id)).length;
-  const countryStats = countryFilter === 'all' ? COUNTRIES : countryFilter === 'eu' ? EU_COUNTRIES : COUNTRIES.filter((target) => !target.eu);
   const stats = [
-    ...(kind === 'all' && countryFilter === 'all' || kind === 'department' ? [{ targets: DEPARTMENTS, label: 'départements', showEuDetail: false }] : []),
-    ...(kind !== 'department' ? [{ targets: countryStats, label: countryFilter === 'eu' ? 'pays de l’UE' : countryFilter === 'other' ? 'pays hors UE' : 'pays', showEuDetail: countryFilter === 'all' }] : []),
+    ...(category === 'all' || category === 'department' ? [{ targets: DEPARTMENTS, label: 'départements', showEuDetail: false }] : []),
+    ...(category !== 'department' ? [{ targets: category === 'all' ? COUNTRIES : collectionTargets(category), label: category === 'eu' ? 'pays de l’UE' : category === 'other' ? 'pays hors UE' : 'pays', showEuDetail: category === 'all' }] : []),
   ];
   const handleAdd = async (target: Target) => {
     setActionError(null);
     try { return await addObservation(target.id, target.type); }
     catch (cause) { setActionError('Impossible d’enregistrer l’observation. Réessayez.'); throw cause; }
   };
-  const changeKind = (next: CollectionKind) => { setKind(next); setCountryFilter('all'); };
 
   if (loading) return <View style={[styles.loading, { backgroundColor: colors.background }]}><ActivityIndicator size="large" color={colors.accent} /></View>;
 
@@ -87,16 +84,12 @@ export default function CollectionScreen() {
         </Link>
         <ObservationFeedback />
         {actionError && <Text accessibilityRole="alert" style={{ color: colors.danger, marginBottom: 12 }}>{actionError}</Text>}
-        <View style={styles.row}>
-          <FilterChip active={kind === 'all'} label="Tout" onPress={() => changeKind('all')} />
-          <FilterChip active={kind === 'department'} label="Départements" onPress={() => changeKind('department')} />
-          <FilterChip active={kind === 'country'} label="Pays" onPress={() => changeKind('country')} />
-        </View>
-        {kind !== 'department' && <View style={styles.row}>
-          <FilterChip active={countryFilter === 'all'} label="Tous les pays" onPress={() => setCountryFilter('all')} />
-          <FilterChip active={countryFilter === 'eu'} label="UE" onPress={() => setCountryFilter('eu')} />
-          <FilterChip active={countryFilter === 'other'} label="Hors UE" onPress={() => setCountryFilter('other')} />
-        </View>}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          <FilterChip compact active={category === 'all'} label="Tout" onPress={() => setCategory('all')} />
+          <FilterChip compact active={category === 'department'} label="Départements" onPress={() => setCategory('department')} />
+          <FilterChip compact active={category === 'eu'} label="Pays UE" onPress={() => setCategory('eu')} />
+          <FilterChip compact active={category === 'other'} label="Pays Hors UE" onPress={() => setCategory('other')} />
+        </ScrollView>
         <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <MaterialIcons name="search" size={21} color={colors.subduedText} />
           <TextInput ref={searchRef} accessibilityLabel="Rechercher un code, pays ou département" value={query} onChangeText={setQuery} placeholder="Code ou nom de la plaque" placeholderTextColor={colors.subduedText} autoCapitalize="characters" autoCorrect={false} style={[styles.searchInput, { color: colors.text }]} />
@@ -147,6 +140,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: '900', marginTop: 2 },
   subtitle: { fontSize: 15, marginTop: 4, marginBottom: 14 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingVertical: 7 },
+  filterRow: { flexDirection: 'row', gap: 6, paddingVertical: 7 },
   progressGrid: { flexDirection: 'row', gap: 12, marginTop: 10, marginBottom: 18 },
   progressCard: { flex: 1, borderRadius: 18, padding: 16, borderWidth: 1 },
   progressNumber: { fontWeight: '900', fontSize: 24 },

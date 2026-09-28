@@ -18,11 +18,11 @@ Collection defaults to **Ce trajet** when a session starts or an active session 
 and to **Global** when no session is active. **Global** includes all trips and
 outside-session sightings. **Ce trajet** scopes counts, found/missing filters, and
 progress to the active trip. You can switch back to Global during a trip.
-Categories **Tout**, **Départements**, and **Pays** support code/name/region searches;
-**UE** and **Hors UE** show only matching countries, even under **Tout**, and the
-completion counter follows the selected country group. Countries and region groups use
-French alphabetical order; departments stay ordered by code. EU completion remains
-separate from the expanded country catalog.
+One category row offers **Tout**, **Départements**, **Pays UE**, and **Pays Hors UE**.
+Each choice supports code/name/region searches. The country choices exclude French
+departments, and the completion counter follows the selected category. Countries
+and region groups use French alphabetical order; departments stay ordered by code.
+EU completion remains separate from the expanded country catalog.
 
 After a successful addition, the add button briefly shows a check. A compact inline
 confirmation offers undo for the most recent addition until dismissed or replaced,
