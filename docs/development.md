@@ -6,7 +6,7 @@
 
 | Component | Installed version / configuration |
 | --- | --- |
-| Application | `1.0.1` in `package.json` and `app.json` |
+| Application | `1.0.2` in `package.json` and `app.json` |
 | Node.js | Major version `22` for development and GitHub Actions; [.nvmrc](../.nvmrc) |
 | Expo | SDK 54, package `54.0.36` (range `~54.0.35`) |
 | React / React DOM | `19.1.0` |
