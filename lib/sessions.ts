@@ -1,5 +1,6 @@
 import type { Observation } from './observations';
 import { getTargetById } from '../data/targets';
+import { buildTargetProgress } from './target-stats';
 
 export type RegionStanding = { region: string; count: number };
 
@@ -41,4 +42,20 @@ export function formatSessionDuration(session: TripSession, now = Date.now()) {
   if (minutes < 60) return `${minutes} min`;
   const remainder = minutes % 60;
   return `${Math.floor(minutes / 60)} h${remainder ? ` ${remainder} min` : ''}`;
+}
+
+export function sessionInsights(observations: Observation[], session: TripSession) {
+  const summary = summarizeSession(observations, session.id);
+  const progress = buildTargetProgress(summary.observations);
+  // Use the first surviving sighting, including legacy/outside-session observations.
+  // The journal stores newest entries first, so the later array entry is older on timestamp ties.
+  const firstByTarget = new Map<string, Observation>();
+  for (const entry of observations) {
+    const first = firstByTarget.get(entry.targetId);
+    if (!first || entry.observedAt < first.observedAt || entry.observedAt === first.observedAt) firstByTarget.set(entry.targetId, entry);
+  }
+  const discoveries = [...progress.keys()].filter((id) => firstByTarget.get(id)?.sessionId === session.id);
+  const frequencies = [...progress].sort(([aId, a], [bId, b]) => b.count - a.count || (getTargetById(aId)?.name ?? aId).localeCompare(getTargetById(bId)?.name ?? bId, 'fr'));
+  const euCountries = [...progress.keys()].filter((id) => getTargetById(id)?.eu).length;
+  return { ...summary, discoveries, frequencies, euCountries };
 }

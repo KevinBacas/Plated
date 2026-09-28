@@ -1,4 +1,4 @@
-import 'expo-sqlite/localStorage/install';
+import '@/lib/install-local-storage';
 
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -9,6 +9,8 @@ import { getActiveSession, type TripSession } from '@/lib/sessions';
 
 type ObservationContextValue = Journal & {
   activeSession: TripSession | null;
+  lastAdded: Observation | null;
+  dismissLastAdded: () => void;
   loading: boolean;
   error: string | null;
   startSession: () => Promise<void>;
@@ -28,6 +30,7 @@ function getStore() {
 
 export function ObservationsProvider({ children }: PropsWithChildren) {
   const [journal, setJournal] = useState<Journal>({ observations: [], sessions: [] });
+  const [lastAdded, setLastAdded] = useState<Observation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +49,8 @@ export function ObservationsProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<ObservationContextValue>(() => ({
     ...journal,
+    lastAdded,
+    dismissLastAdded: () => setLastAdded(null),
     activeSession: getActiveSession(journal.sessions),
     loading,
     error,
@@ -55,11 +60,18 @@ export function ObservationsProvider({ children }: PropsWithChildren) {
     addObservation: async (targetId, targetType) => {
       const result = getStore().addObservation(targetId, targetType);
       setJournal(result.journal);
+      setLastAdded(result.observation);
       return result.observation;
     },
-    undoObservation: async (id) => setJournal(getStore().deleteObservation(id)),
-    deleteObservation: async (id) => setJournal(getStore().deleteObservation(id)),
-  }), [error, journal, loading, refresh]);
+    undoObservation: async (id) => {
+      setJournal(getStore().deleteObservation(id));
+      setLastAdded((current) => current?.id === id ? null : current);
+    },
+    deleteObservation: async (id) => {
+      setJournal(getStore().deleteObservation(id));
+      setLastAdded((current) => current?.id === id ? null : current);
+    },
+  }), [error, journal, lastAdded, loading, refresh]);
 
   return <ObservationContext.Provider value={value}>{children}</ObservationContext.Provider>;
 }

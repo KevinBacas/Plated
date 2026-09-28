@@ -7,6 +7,8 @@ export type Target = {
   name: string;
   region?: string;
   flag?: string;
+  eu?: boolean;
+  aliases?: string[];
 };
 
 type DepartmentSeed = [string, string, string];
@@ -67,13 +69,22 @@ const countries: [string, string, string, string][] = [
   ['ES', 'Espagne', 'E', '🇪🇸'], ['SE', 'Suède', 'S', '🇸🇪'],
 ];
 
-export const COUNTRIES: Target[] = countries.map(([code, name, plateCode, flag]) => ({
+export const EU_COUNTRIES: Target[] = countries.map(([code, name, plateCode, flag]) => ({
   id: `country-${code}`,
   type: 'country',
   code: plateCode,
   name,
   flag,
+  eu: true,
+  aliases: [code],
 }));
+
+export const COUNTRIES: Target[] = ([
+  ...EU_COUNTRIES,
+  { id: 'country-GB', type: 'country', code: 'UK', name: 'Royaume-Uni', flag: '🇬🇧', eu: false, aliases: ['GB', 'Royaume Uni'] },
+  { id: 'country-CH', type: 'country', code: 'CH', name: 'Suisse', flag: '🇨🇭', eu: false },
+  { id: 'country-MC', type: 'country', code: 'MC', name: 'Monaco', flag: '🇲🇨', eu: false },
+] satisfies Target[]).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 
 export const TARGETS = [...DEPARTMENTS, ...COUNTRIES];
 export const TARGET_BY_ID = new Map(TARGETS.map((target) => [target.id, target]));
